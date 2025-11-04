@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "SlashCommand(/speckit.constitution)",
+      "Bash(git fetch:*)",
+      "Bash(if [ -d \"specs\" ])",
+      "Bash(then ls -d specs/[0-9]*-ai-avatar-language-app)",
+      "Bash(fi)",
+      "Bash(pwsh:*)",
+      "Bash(powershell.exe -File:*)",
+      "SlashCommand(/speckit.plan)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

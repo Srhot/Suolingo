@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+coverage/
+.expo/
+.expo-shared/
+firebase/functions/node_modules/
+firebase/functions/lib/
+*.config.js
+babel.config.js
+metro.config.js

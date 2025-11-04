@@ -1,0 +1,54 @@
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+
+# Build artifacts
+dist/
+build/
+.expo/
+.expo-shared/
+web-build/
+
+# Git
+.git/
+.gitignore
+
+# Environment files
+.env*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+*.log
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# Temporary files
+*.tmp
+*.bak
+.cache/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml

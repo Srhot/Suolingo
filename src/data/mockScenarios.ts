@@ -1,0 +1,80 @@
+import { Scenario } from '@/types/Scenario';
+
+export const MOCK_SCENARIOS: Scenario[] = [
+  {
+    id: 'restaurant-beginner',
+    title: 'Ordering at a Restaurant',
+    category: 'restaurant',
+    difficulty: 'beginner',
+    description: 'Learn how to order food, ask about menu items, and request the bill.',
+    estimatedDuration: 10,
+    xpReward: 50,
+    objectives: [
+      'Greet the waiter',
+      'Order a main dish',
+      'Ask about ingredients',
+      'Request the bill',
+    ],
+    thumbnailUrl: undefined, // User will provide
+    avatarVideoUrl: undefined, // User will provide
+    isCompleted: false,
+    isLocked: false,
+  },
+  {
+    id: 'airport-beginner',
+    title: 'At the Airport',
+    category: 'travel',
+    difficulty: 'beginner',
+    description: 'Practice checking in, asking for directions, and handling luggage.',
+    estimatedDuration: 12,
+    xpReward: 50,
+    objectives: [
+      'Check in at counter',
+      'Ask about gate location',
+      'Declare items at security',
+      'Find boarding gate',
+    ],
+    thumbnailUrl: undefined,
+    avatarVideoUrl: undefined,
+    isCompleted: false,
+    isLocked: false,
+  },
+  {
+    id: 'pharmacy-beginner',
+    title: 'Buying Medicine',
+    category: 'healthcare',
+    difficulty: 'beginner',
+    description: 'Learn to describe symptoms and purchase medication at a pharmacy.',
+    estimatedDuration: 8,
+    xpReward: 40,
+    objectives: [
+      'Describe your symptoms',
+      'Ask for medication recommendations',
+      'Understand dosage instructions',
+      'Complete purchase',
+    ],
+    thumbnailUrl: undefined,
+    avatarVideoUrl: undefined,
+    isCompleted: false,
+    isLocked: true, // Locked until restaurant is completed
+  },
+  {
+    id: 'shopping-intermediate',
+    title: 'Shopping for Clothes',
+    category: 'shopping',
+    difficulty: 'intermediate',
+    description: 'Practice asking about sizes, colors, and trying on clothes.',
+    estimatedDuration: 15,
+    xpReward: 75,
+    objectives: [
+      'Ask for specific items',
+      'Inquire about sizes and colors',
+      'Request to try items on',
+      'Negotiate or ask for discounts',
+    ],
+    thumbnailUrl: undefined,
+    avatarVideoUrl: undefined,
+    isCompleted: false,
+    isLocked: true,
+  },
+];
