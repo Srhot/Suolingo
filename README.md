@@ -2,7 +2,7 @@
 
 > **University Assignment**: Interactive language learning application with real-time AI avatar lip-sync
 
-AI-powered Turkish language learning application featuring **custom AI avatars** with real-time lip-sync technology, text-to-speech, and speech-to-text capabilities.
+AI-powered **foreign language learning application** featuring **custom AI avatars** with real-time lip-sync technology, text-to-speech, and speech-to-text capabilities. Learn languages through interactive AI conversations with scenario-based exercises at different proficiency levels.
 
 ## ✨ Features
 
@@ -86,7 +86,7 @@ npx expo start
 ## 🎮 How to Use
 
 1. **Select Avatar**: Choose between male or female professor
-2. **Type Message**: Enter text in Turkish
+2. **Type Message**: Enter text to practice (currently supports Turkish interface)
 3. **Press "Konuştur"**: Avatar generates lip-sync video
 4. **Watch & Listen**: Video plays with synchronized speech
 5. **Navigate**: Use ◀️ ▶️ buttons to replay previous messages
@@ -178,7 +178,7 @@ suolingo/
 - **Total Components**: 15+
 - **Lines of Code**: ~3,500+
 - **API Services**: 4 (A2E, Deepgram, ElevenLabs, Gemini)
-- **Supported Languages**: Turkish (primary)
+- **Current Interface**: Turkish (multi-language support planned)
 
 ## 🎓 Academic Context
 
