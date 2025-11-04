@@ -7,6 +7,7 @@ export interface Avatar {
   isStaticImage?: boolean; // Static görsel mi (PNG/JPG) yoksa video mu (MP4)
   thumbnailUrl?: string;
   a2eCreatorId?: string; // A2E AI creator ID (custom avatar için)
+  ttsVoiceId?: string; // A2E TTS voice ID (gender-specific)
 }
 
 export interface ConversationMessage {
@@ -15,4 +16,5 @@ export interface ConversationMessage {
   timestamp: Date;
   audioUrl?: string; // TTS audio
   videoUrl?: string; // D-ID lip-sync video (opsiyonel)
+  avatarId?: string; // Which avatar spoke this message
 }

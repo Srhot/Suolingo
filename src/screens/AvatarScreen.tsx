@@ -52,6 +52,12 @@ export default function AvatarScreen() {
   const closeMenu = () => setMenuVisible(false);
 
   const handleAvatarSelect = (avatar: Avatar) => {
+    if (selectedAvatar.id === avatar.id) {
+      // Same avatar, just close menu
+      closeMenu();
+      return;
+    }
+
     setSelectedAvatar(avatar);
     setCurrentVideoUrl(null); // Reset video to idle
     closeMenu();
@@ -68,6 +74,7 @@ export default function AvatarScreen() {
       id: Date.now().toString(),
       text: textInput.trim(),
       timestamp: new Date(),
+      avatarId: selectedAvatar.id, // Save which avatar spoke
     };
 
     // Mesajı kaydet
@@ -216,12 +223,17 @@ export default function AvatarScreen() {
       setCurrentMessageIndex(nextIndex);
       setTextInput(messages[nextIndex].text);
 
-      // Önceki mesajı tekrar konuştur
-      Speech.speak(messages[nextIndex].text, {
-        language: 'tr-TR',
-        pitch: 1.0,
-        rate: 0.9,
-      });
+      // Eğer video URL'si varsa videoyu çal, yoksa TTS kullan
+      const message = messages[nextIndex];
+      if (message.videoUrl) {
+        setCurrentVideoUrl(message.videoUrl);
+      } else {
+        Speech.speak(message.text, {
+          language: 'tr-TR',
+          pitch: 1.0,
+          rate: 0.9,
+        });
+      }
     }
   };
 
@@ -232,12 +244,17 @@ export default function AvatarScreen() {
       setCurrentMessageIndex(prevIndex);
       setTextInput(messages[prevIndex].text);
 
-      // Önceki mesajı tekrar konuştur
-      Speech.speak(messages[prevIndex].text, {
-        language: 'tr-TR',
-        pitch: 1.0,
-        rate: 0.9,
-      });
+      // Eğer video URL'si varsa videoyu çal, yoksa TTS kullan
+      const message = messages[prevIndex];
+      if (message.videoUrl) {
+        setCurrentVideoUrl(message.videoUrl);
+      } else {
+        Speech.speak(message.text, {
+          language: 'tr-TR',
+          pitch: 1.0,
+          rate: 0.9,
+        });
+      }
     }
   };
 

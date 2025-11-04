@@ -45,7 +45,7 @@ class A2EService {
         `${this.baseURL}/api/v1/video/send_tts`, // Correct endpoint from network analysis
         {
           msg: text,
-          tts_id: '63a549c1ad2a27fe43d966e1',
+          tts_id: avatar.ttsVoiceId || '63a549c1ad2a27fe43d966e1', // Use avatar's voice ID
           speech_rate: 1,
         },
         {
