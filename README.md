@@ -203,7 +203,7 @@ This project is created for educational purposes as part of a university assignm
 ## 🔗 Links
 
 - **GitHub**: [github.com/Srhot/Suolingo](https://github.com/Srhot/Suolingo)
-- **LinkedIn**: [Your LinkedIn Profile]
+- **LinkedIn**:[ [Your LinkedIn Profile]](https://www.linkedin.com/in/serhat-sezgul/)
 - **Demo Video**: [YouTube Link]
 
 ---
