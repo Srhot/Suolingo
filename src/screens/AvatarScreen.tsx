@@ -45,7 +45,7 @@ export default function AvatarScreen() {
     ElevenLabsService.getVoiceForGender(AVATARS[0].gender)
   );
   const [voiceMenuVisible, setVoiceMenuVisible] = useState(false);
-  const [useElevenLabs, setUseElevenLabs] = useState(true); // Toggle between ElevenLabs and A2E
+  const [useElevenLabs, setUseElevenLabs] = useState(false); // 🔄 Default: A2E (Built-in) - ElevenLabs ready for future
 
   // Dual Text Areas (Turkish ↔ English)
   const [textInput1, setTextInput1] = useState('');
