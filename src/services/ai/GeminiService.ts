@@ -7,7 +7,7 @@ class GeminiService {
 
   constructor() {
     this.genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }); // Updated to latest model
   }
 
   async generateScenarioResponse(

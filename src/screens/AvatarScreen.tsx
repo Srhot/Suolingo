@@ -581,48 +581,51 @@ export default function AvatarScreen() {
           </View>
 
           {/* 🆕 CENTER - Mode Selector */}
-          <Menu
-            visible={modeMenuVisible}
-            onDismiss={() => setModeMenuVisible(false)}
-            anchor={
-              <TouchableOpacity
-                onPress={() => setModeMenuVisible(true)}
-                style={styles.modeBadge}
-              >
-                <Text variant="labelSmall" style={styles.modeLabel}>
-                  {learningMode === 'translation' && '📝 Translation'}
-                  {learningMode === 'conversation' && '💬 Conversation'}
-                  {learningMode === 'correction' && '✏️ Correction'}
-                  {learningMode === 'wordofday' && '📚 Word of Day'}
-                </Text>
-                <IconButton icon="chevron-down" size={16} style={styles.modeDropdownIcon} />
-              </TouchableOpacity>
-            }
-          >
-            <Menu.Item
-              onPress={() => { setLearningMode('translation'); setModeMenuVisible(false); }}
-              title="📝 Translation Mode"
-              leadingIcon={learningMode === 'translation' ? 'check' : undefined}
-            />
-            <Menu.Item
-              onPress={() => { setLearningMode('conversation'); setModeMenuVisible(false); }}
-              title="💬 Conversation Mode"
-              leadingIcon={learningMode === 'conversation' ? 'check' : undefined}
-            />
-            <Menu.Item
-              onPress={() => { setLearningMode('correction'); setModeMenuVisible(false); }}
-              title="✏️ Sentence Correction"
-              leadingIcon={learningMode === 'correction' ? 'check' : undefined}
-            />
-            <Menu.Item
-              onPress={() => { setLearningMode('wordofday'); setModeMenuVisible(false); }}
-              title="📚 Word of the Day"
-              leadingIcon={learningMode === 'wordofday' ? 'check' : undefined}
-            />
-          </Menu>
+          <View style={styles.centerBadge}>
+            <Menu
+              visible={modeMenuVisible}
+              onDismiss={() => setModeMenuVisible(false)}
+              anchor={
+                <TouchableOpacity
+                  onPress={() => setModeMenuVisible(true)}
+                  style={styles.modeBadge}
+                >
+                  <Text variant="labelSmall" style={styles.modeLabel}>
+                    {learningMode === 'translation' && '📝'}
+                    {learningMode === 'conversation' && '💬'}
+                    {learningMode === 'correction' && '✏️'}
+                    {learningMode === 'wordofday' && '📚'}
+                  </Text>
+                  <IconButton icon="chevron-down" size={16} style={styles.modeDropdownIcon} />
+                </TouchableOpacity>
+              }
+            >
+              <Menu.Item
+                onPress={() => { setLearningMode('translation'); setModeMenuVisible(false); }}
+                title="📝 Translation Mode"
+                leadingIcon={learningMode === 'translation' ? 'check' : undefined}
+              />
+              <Menu.Item
+                onPress={() => { setLearningMode('conversation'); setModeMenuVisible(false); }}
+                title="💬 Conversation Mode"
+                leadingIcon={learningMode === 'conversation' ? 'check' : undefined}
+              />
+              <Menu.Item
+                onPress={() => { setLearningMode('correction'); setModeMenuVisible(false); }}
+                title="✏️ Sentence Correction"
+                leadingIcon={learningMode === 'correction' ? 'check' : undefined}
+              />
+              <Menu.Item
+                onPress={() => { setLearningMode('wordofday'); setModeMenuVisible(false); }}
+                title="📚 Word of the Day"
+                leadingIcon={learningMode === 'wordofday' ? 'check' : undefined}
+              />
+            </Menu>
+          </View>
 
           {/* Right side - Voice selector */}
-          <Menu
+          <View style={styles.rightBadge}>
+            <Menu
             visible={voiceMenuVisible}
             onDismiss={closeVoiceMenu}
             anchor={
@@ -672,6 +675,7 @@ export default function AvatarScreen() {
                 />
               ))}
           </Menu>
+          </View>
         </View>
 
         {/* 🆕 COMPACT Avatar Video Section */}
@@ -1166,17 +1170,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     paddingTop: 60,
     paddingBottom: 12,
     backgroundColor: '#F5F5F5',
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
+    gap: 4,
   },
   avatarBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
+    flex: 1,
+  },
+  centerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 0,
+  },
+  rightBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flex: 0,
   },
   avatarThumbnail: {
     width: 48,
