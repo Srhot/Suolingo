@@ -382,6 +382,8 @@ export default function AvatarScreen() {
                   shouldPlay={true}
                   isLooping={false}
                   useNativeControls={false}
+                  volume={1.0} // FIXED: Full volume
+                  isMuted={false} // FIXED: Ensure not muted
                   onPlaybackStatusUpdate={(status) => {
                     if (status.isLoaded && status.didJustFinish) {
                       console.log('🎬 Video finished, returning to idle');
@@ -415,6 +417,8 @@ export default function AvatarScreen() {
                   shouldPlay
                   isLooping
                   useNativeControls={false}
+                  volume={0.0} // Muted for idle loop (no sound needed)
+                  isMuted={true} // Idle video is muted
                 />
               )}
             </View>
@@ -721,16 +725,18 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden', // IMPORTANT: Clips content to oval shape
+    borderRadius: 120, // Match parent frame
   },
   video: {
-    width: '100%',
-    height: '100%',
-    transform: [{ scale: 0.75 }], // Zoom out - show full head including eyebrows
+    width: '120%',  // Wider to fill oval
+    height: '120%', // Taller to fill oval
+    transform: [{ scale: 0.55 }], // More zoom out - show full head + hair
   },
   staticImage: {
-    width: '100%',
-    height: '100%',
-    transform: [{ scale: 0.75 }], // Zoom out - show full head including eyebrows
+    width: '120%',  // Wider to fill oval
+    height: '120%', // Taller to fill oval
+    transform: [{ scale: 0.55 }], // More zoom out - show full head + hair
   },
   loadingOverlay: {
     position: 'absolute',
