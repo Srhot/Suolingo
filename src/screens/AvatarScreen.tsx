@@ -442,10 +442,10 @@ export default function AvatarScreen() {
 
       setCorrectionResult(result);
 
-      // Avatar speaks the correction
+      // Avatar speaks ONLY the corrected sentence (not explanation - too long for A2E)
       const messageToSpeak = result.hasError
-        ? `Corrected: ${result.corrected}. ${result.explanation}`
-        : `Perfect! ${result.explanation}`;
+        ? result.corrected
+        : 'Perfect! Your sentence is correct.';
 
       const videoUrl = await A2EService.createLipsync(messageToSpeak, selectedAvatar, targetLang);
       setCurrentVideoUrl(videoUrl);
@@ -591,10 +591,10 @@ export default function AvatarScreen() {
                   style={styles.modeBadge}
                 >
                   <Text variant="labelSmall" style={styles.modeLabel}>
-                    {learningMode === 'translation' && '📝'}
-                    {learningMode === 'conversation' && '💬'}
-                    {learningMode === 'correction' && '✏️'}
-                    {learningMode === 'wordofday' && '📚'}
+                    {learningMode === 'translation' && '📝 Translation'}
+                    {learningMode === 'conversation' && '💬 Talk'}
+                    {learningMode === 'correction' && '✏️ Check'}
+                    {learningMode === 'wordofday' && '📚 Word'}
                   </Text>
                   <IconButton icon="chevron-down" size={16} style={styles.modeDropdownIcon} />
                 </TouchableOpacity>
@@ -1409,15 +1409,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF3E0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 12,
     gap: 2,
   },
   modeLabel: {
     color: '#E65100',
     fontWeight: '600',
-    fontSize: 10,
+    fontSize: 11,
   },
   modeDropdownIcon: {
     margin: 0,
