@@ -40,30 +40,25 @@ class A2EService {
         throw new Error('A2E creator ID not found for avatar');
       }
 
-      // Select appropriate voice ID based on language
-      let voiceId: string;
-      let usingFallbackVoice = false;
+      // Use multilingual voice ID (supports all languages automatically)
+      const voiceId = avatar.ttsVoiceId;
 
-      // For now, always use Turkish voice (English voice IDs not working in A2E)
-      // TODO: Get real English voice IDs from A2E API /v1/anchor/voice_list
-      voiceId = avatar.ttsVoiceId || '63a549c1ad2a27fe43d966e1';
-
-      if (language === 'en') {
-        console.warn('⚠️  English voice not available in A2E yet. Using Turkish voice as fallback.');
-        console.warn('💡 To fix: Get English voice IDs from A2E API: /v1/anchor/voice_list');
-        usingFallbackVoice = true;
+      if (!voiceId) {
+        throw new Error('Voice ID not found for avatar');
       }
 
-      console.log('🗣️ Selected voice ID:', voiceId);
-      console.log('🌐 Target language:', language, usingFallbackVoice ? '(using fallback voice)' : '');
+      console.log('🗣️ Voice ID:', voiceId);
+      console.log('🌐 Language:', language);
+      console.log('👤 Avatar:', avatar.name);
 
       // Step 1: Generate TTS audio using A2E's built-in TTS
-      console.log('📢 Generating TTS audio...');
+      // Multilingual voices automatically detect language and use native pronunciation
+      console.log('📢 Generating TTS audio with multilingual voice...');
       const ttsResponse = await axios.post(
-        `${this.baseURL}/api/v1/video/send_tts`, // Correct endpoint from network analysis
+        `${this.baseURL}/api/v1/video/send_tts`,
         {
           msg: text,
-          tts_id: voiceId, // Use voice ID (Turkish for now)
+          tts_id: voiceId, // Multilingual voice - auto-detects language
           speech_rate: 1,
         },
         {
