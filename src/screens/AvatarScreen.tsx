@@ -238,11 +238,34 @@ export default function AvatarScreen() {
         });
 
         console.log('🎤 Starting recording...');
-        // Use Expo's HIGH_QUALITY preset - tested and works on iOS
-        // Produces CAF format on iOS (Core Audio Format) which Deepgram supports
-        const { recording: newRecording } = await Audio.Recording.createAsync(
-          Audio.RecordingOptionsPresets.HIGH_QUALITY
-        );
+        // Use LINEAR16 PCM WAV - Deepgram's preferred format
+        // This is the most reliable format for speech recognition
+        const { recording: newRecording } = await Audio.Recording.createAsync({
+          isMeteringEnabled: true,
+          android: {
+            extension: '.wav',
+            outputFormat: Audio.AndroidOutputFormat.DEFAULT,
+            audioEncoder: Audio.AndroidAudioEncoder.DEFAULT,
+            sampleRate: 16000,
+            numberOfChannels: 1,
+            bitRate: 128000,
+          },
+          ios: {
+            extension: '.wav',
+            outputFormat: Audio.IOSOutputFormat.LINEARPCM,
+            audioQuality: Audio.IOSAudioQuality.HIGH,
+            sampleRate: 16000,
+            numberOfChannels: 1,
+            bitRate: 128000,
+            linearPCMBitDepth: 16,
+            linearPCMIsBigEndian: false,
+            linearPCMIsFloat: false,
+          },
+          web: {
+            mimeType: 'audio/webm',
+            bitsPerSecond: 128000,
+          },
+        });
 
         setRecording(newRecording);
         setIsRecording(true);
@@ -595,7 +618,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   videoSection: {
-    height: 350,
+    height: 400, // Increased from 350 for more space
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -603,9 +626,9 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   videoFrame: {
-    width: '75%',
-    height: '95%',
-    borderRadius: 120,
+    width: '85%', // Increased from 75% to show full head
+    height: '98%', // Increased from 95% to show hair
+    borderRadius: 140, // Adjusted for larger frame
     overflow: 'hidden',
     borderWidth: 5,
     borderColor: '#6750A4',
