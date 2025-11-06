@@ -36,15 +36,20 @@ class DeepgramService {
       }
 
       // Determine content type based on file extension
-      let contentType = 'audio/m4a';
+      let contentType = 'audio/wav'; // Default fallback
       if (audioFileUri.endsWith('.wav')) {
         contentType = 'audio/wav';
       } else if (audioFileUri.endsWith('.mp3')) {
         contentType = 'audio/mp3';
+      } else if (audioFileUri.endsWith('.m4a')) {
+        contentType = 'audio/m4a';
+      } else if (audioFileUri.endsWith('.caf')) {
+        contentType = 'audio/x-caf'; // iOS Core Audio Format
       } else if (audioFileUri.endsWith('.webm')) {
         contentType = 'audio/webm';
       }
 
+      console.log('Audio file extension:', audioFileUri.split('.').pop());
       console.log('Using content type:', contentType);
 
       // Use multi-language model (detects Turkish and English automatically)

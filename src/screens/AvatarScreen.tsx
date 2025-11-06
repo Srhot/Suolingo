@@ -238,28 +238,11 @@ export default function AvatarScreen() {
         });
 
         console.log('🎤 Starting recording...');
-        const { recording: newRecording } = await Audio.Recording.createAsync({
-          android: {
-            extension: '.m4a',
-            outputFormat: Audio.AndroidOutputFormat.MPEG_4,
-            audioEncoder: Audio.AndroidAudioEncoder.AAC,
-            sampleRate: 16000,
-            numberOfChannels: 1,
-            bitRate: 128000,
-          },
-          ios: {
-            extension: '.m4a',
-            outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
-            audioQuality: Audio.IOSAudioQuality.HIGH,
-            sampleRate: 16000,
-            numberOfChannels: 1,
-            bitRate: 128000,
-          },
-          web: {
-            mimeType: 'audio/webm',
-            bitsPerSecond: 128000,
-          },
-        });
+        // Use Expo's HIGH_QUALITY preset - tested and works on iOS
+        // Produces CAF format on iOS (Core Audio Format) which Deepgram supports
+        const { recording: newRecording } = await Audio.Recording.createAsync(
+          Audio.RecordingOptionsPresets.HIGH_QUALITY
+        );
 
         setRecording(newRecording);
         setIsRecording(true);
