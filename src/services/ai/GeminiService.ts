@@ -252,6 +252,173 @@ Your opening question:`;
       return fallback;
     }
   }
+
+  // 🆕 MODE 10: Flashcard Mode - Generate vocabulary flashcards
+  async generateFlashcardSet(
+    direction: 'tr-to-en' | 'en-to-tr',
+    difficulty: 'beginner' | 'intermediate' | 'advanced' = 'intermediate',
+    count: number = 5
+  ): Promise<Array<{ word: string; answer: string; hint?: string }>> {
+    try {
+      const fromLang = direction === 'tr-to-en' ? 'Turkish' : 'English';
+      const toLang = direction === 'tr-to-en' ? 'English' : 'Turkish';
+
+      const prompt = `You are a ${fromLang} language teacher creating flashcards for ${difficulty} level students.
+
+Generate ${count} useful vocabulary words for flashcard practice.
+
+Format your response EXACTLY like this (one per line):
+WORD1: [word in ${fromLang}]
+ANSWER1: [translation in ${toLang}]
+WORD2: [word in ${fromLang}]
+ANSWER2: [translation in ${toLang}]
+...
+
+Choose practical, common words appropriate for ${difficulty} learners.
+
+Your flashcard set:`;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      // Parse response
+      const flashcards: Array<{ word: string; answer: string; hint?: string }> = [];
+      const lines = text.split('\n').filter((line) => line.trim());
+
+      for (let i = 0; i < lines.length; i++) {
+        const wordMatch = lines[i].match(/WORD\d+:\s*(.+)/i);
+        const answerMatch = i + 1 < lines.length ? lines[i + 1].match(/ANSWER\d+:\s*(.+)/i) : null;
+
+        if (wordMatch && answerMatch) {
+          flashcards.push({
+            word: wordMatch[1].trim(),
+            answer: answerMatch[1].trim(),
+          });
+          i++; // Skip answer line
+        }
+      }
+
+      // Fallback if parsing failed
+      if (flashcards.length === 0) {
+        return [
+          { word: 'hello', answer: 'merhaba' },
+          { word: 'goodbye', answer: 'güle güle' },
+          { word: 'thank you', answer: 'teşekkür ederim' },
+          { word: 'please', answer: 'lütfen' },
+          { word: 'water', answer: 'su' },
+        ];
+      }
+
+      return flashcards.slice(0, count);
+    } catch (error) {
+      console.error('Gemini Flashcard Error:', error);
+      return [
+        { word: 'hello', answer: 'merhaba' },
+        { word: 'goodbye', answer: 'güle güle' },
+        { word: 'thank you', answer: 'teşekkür ederim' },
+        { word: 'please', answer: 'lütfen' },
+        { word: 'water', answer: 'su' },
+      ];
+    }
+  }
+
+  // 🆕 MODE 12: Grammar Quiz - Generate grammar quiz questions
+  async generateGrammarQuiz(
+    topic: string,
+    difficulty: 'beginner' | 'intermediate' | 'advanced' = 'intermediate',
+    count: number = 5
+  ): Promise<Array<{
+    question: string;
+    options: string[];
+    correctAnswer: number;
+    explanation: string;
+  }>> {
+    try {
+      const prompt = `You are an English grammar teacher creating a ${difficulty} level quiz on "${topic}".
+
+Generate ${count} multiple choice questions.
+
+Format your response EXACTLY like this:
+Q1: [question text]
+A: [option A]
+B: [option B]
+C: [option C]
+D: [option D]
+CORRECT: [A/B/C/D]
+EXPLANATION: [brief explanation in Turkish]
+
+Q2: [question text]
+...
+
+Make questions practical and clear for ${difficulty} level learners.
+
+Your quiz:`;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      // Parse response
+      const questions: Array<{
+        question: string;
+        options: string[];
+        correctAnswer: number;
+        explanation: string;
+      }> = [];
+
+      const blocks = text.split(/Q\d+:/).filter((block) => block.trim());
+
+      for (const block of blocks) {
+        const lines = block.split('\n').filter((line) => line.trim());
+        if (lines.length < 6) continue;
+
+        const questionText = lines[0].trim();
+        const optionA = lines.find((line) => line.match(/^A:/i))?.replace(/^A:/i, '').trim();
+        const optionB = lines.find((line) => line.match(/^B:/i))?.replace(/^B:/i, '').trim();
+        const optionC = lines.find((line) => line.match(/^C:/i))?.replace(/^C:/i, '').trim();
+        const optionD = lines.find((line) => line.match(/^D:/i))?.replace(/^D:/i, '').trim();
+        const correctMatch = lines.find((line) => line.match(/^CORRECT:/i));
+        const explanationMatch = lines.find((line) => line.match(/^EXPLANATION:/i));
+
+        if (optionA && optionB && optionC && optionD && correctMatch && explanationMatch) {
+          const correctLetter = correctMatch.replace(/^CORRECT:/i, '').trim().toUpperCase();
+          const correctIndex = { A: 0, B: 1, C: 2, D: 3 }[correctLetter] ?? 0;
+
+          questions.push({
+            question: questionText,
+            options: [optionA, optionB, optionC, optionD],
+            correctAnswer: correctIndex,
+            explanation: explanationMatch.replace(/^EXPLANATION:/i, '').trim(),
+          });
+        }
+      }
+
+      // Fallback if parsing failed
+      if (questions.length === 0) {
+        return [
+          {
+            question: 'I ___ to school yesterday.',
+            options: ['go', 'went', 'gone', 'going'],
+            correctAnswer: 1,
+            explanation: 'Simple Past tense için "went" kullanılır.',
+          },
+        ];
+      }
+
+      return questions.slice(0, count);
+    } catch (error) {
+      console.error('Gemini Grammar Quiz Error:', error);
+      return [
+        {
+          question: 'I ___ to school yesterday.',
+          options: ['go', 'went', 'gone', 'going'],
+          correctAnswer: 1,
+          explanation: 'Simple Past tense için "went" kullanılır.',
+        },
+      ];
+    }
+  }
 }
 
 export default new GeminiService();

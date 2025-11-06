@@ -34,7 +34,7 @@ import GeminiService from '@/services/ai/GeminiService';
 import { LanguageCode } from '@/types/Translation';
 
 // 🆕 Learning Modes
-type LearningMode = 'translation' | 'conversation' | 'correction' | 'wordofday';
+type LearningMode = 'translation' | 'conversation' | 'correction' | 'wordofday' | 'flashcard' | 'quiz';
 
 export default function AvatarScreen() {
   const theme = useTheme();
@@ -74,6 +74,25 @@ export default function AvatarScreen() {
     examples: string[];
     translation: string;
   } | null>(null);
+
+  // 🆕 Flashcard Mode State
+  const [flashcardSet, setFlashcardSet] = useState<Array<{ word: string; answer: string }>>([]);
+  const [currentFlashcardIndex, setCurrentFlashcardIndex] = useState(0);
+  const [flashcardInput, setFlashcardInput] = useState('');
+  const [showFlashcardAnswer, setShowFlashcardAnswer] = useState(false);
+  const [flashcardScore, setFlashcardScore] = useState({ correct: 0, total: 0 });
+
+  // 🆕 Grammar Quiz Mode State
+  const [quizQuestions, setQuizQuestions] = useState<Array<{
+    question: string;
+    options: string[];
+    correctAnswer: number;
+    explanation: string;
+  }>>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [showQuizExplanation, setShowQuizExplanation] = useState(false);
+  const [quizScore, setQuizScore] = useState({ correct: 0, total: 0 });
 
   // Dual Text Areas (Turkish ↔ English)
   const [textInput1, setTextInput1] = useState('');
@@ -498,6 +517,162 @@ export default function AvatarScreen() {
     }
   };
 
+  // 🆕 MODE 10: Flashcard Mode Handlers
+  const handleStartFlashcard = async () => {
+    try {
+      setIsProcessing(true);
+      const direction = lang2 === 'en' ? 'en-to-tr' : 'tr-to-en'; // Learn target language
+
+      console.log('🃏 Generating flashcard set...');
+      const flashcards = await GeminiService.generateFlashcardSet(direction, 'intermediate', 5);
+
+      setFlashcardSet(flashcards);
+      setCurrentFlashcardIndex(0);
+      setFlashcardInput('');
+      setShowFlashcardAnswer(false);
+      setFlashcardScore({ correct: 0, total: 0 });
+
+      // Avatar introduces flashcards
+      const intro = lang2 === 'en'
+        ? "Let's practice vocabulary! I'll show you words and you translate them."
+        : "Kelime pratiği yapalım! Size kelimeler göstereceğim ve çevireceksiniz.";
+      const videoUrl = await A2EService.createLipsync(intro, selectedAvatar, lang2);
+      setCurrentVideoUrl(videoUrl);
+
+      console.log('✅ Flashcard set ready');
+    } catch (error) {
+      console.error('❌ Flashcard error:', error);
+      Alert.alert('Hata', 'Flashcard oluşturulamadı');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCheckFlashcard = () => {
+    const currentCard = flashcardSet[currentFlashcardIndex];
+    const userAnswer = flashcardInput.trim().toLowerCase();
+    const correctAnswer = currentCard.answer.toLowerCase();
+
+    const isCorrect = userAnswer === correctAnswer ||
+                      correctAnswer.includes(userAnswer) ||
+                      userAnswer.includes(correctAnswer);
+
+    setShowFlashcardAnswer(true);
+
+    if (isCorrect) {
+      setFlashcardScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
+      Alert.alert('✅ Correct!', `Yes! ${currentCard.answer}`, [{ text: 'Next', onPress: handleNextFlashcard }]);
+    } else {
+      setFlashcardScore(prev => ({ correct: prev.correct, total: prev.total + 1 }));
+      Alert.alert('❌ Not quite', `The correct answer is: ${currentCard.answer}`, [{ text: 'Next', onPress: handleNextFlashcard }]);
+    }
+  };
+
+  const handleNextFlashcard = async () => {
+    if (currentFlashcardIndex < flashcardSet.length - 1) {
+      setCurrentFlashcardIndex(currentFlashcardIndex + 1);
+      setFlashcardInput('');
+      setShowFlashcardAnswer(false);
+    } else {
+      // Quiz completed
+      const percentage = Math.round((flashcardScore.correct / flashcardScore.total) * 100);
+      const message = percentage >= 80
+        ? `Excellent! You got ${flashcardScore.correct} out of ${flashcardScore.total}!`
+        : `Good try! You got ${flashcardScore.correct} out of ${flashcardScore.total}. Keep practicing!`;
+
+      try {
+        setIsProcessing(true);
+        const videoUrl = await A2EService.createLipsync(message, selectedAvatar, lang2);
+        setCurrentVideoUrl(videoUrl);
+      } catch (error) {
+        console.error('❌ Score speak error:', error);
+      } finally {
+        setIsProcessing(false);
+      }
+
+      Alert.alert('Flashcard Complete!', message, [
+        { text: 'Try Again', onPress: handleStartFlashcard },
+        { text: 'Done', onPress: () => setFlashcardSet([]) }
+      ]);
+    }
+  };
+
+  // 🆕 MODE 12: Grammar Quiz Mode Handlers
+  const handleStartQuiz = async (topic: string) => {
+    try {
+      setIsProcessing(true);
+
+      console.log('📝 Generating grammar quiz...');
+      const questions = await GeminiService.generateGrammarQuiz(topic, 'intermediate', 5);
+
+      setQuizQuestions(questions);
+      setCurrentQuestionIndex(0);
+      setSelectedAnswer(null);
+      setShowQuizExplanation(false);
+      setQuizScore({ correct: 0, total: 0 });
+
+      // Avatar introduces quiz
+      const intro = lang2 === 'en'
+        ? `Let's test your ${topic} knowledge! Choose the correct answer.`
+        : `${topic} bilginizi test edelim! Doğru cevabı seçin.`;
+      const videoUrl = await A2EService.createLipsync(intro, selectedAvatar, lang2);
+      setCurrentVideoUrl(videoUrl);
+
+      console.log('✅ Grammar quiz ready');
+    } catch (error) {
+      console.error('❌ Quiz error:', error);
+      Alert.alert('Hata', 'Quiz oluşturulamadı');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSelectAnswer = (answerIndex: number) => {
+    if (showQuizExplanation) return; // Already answered
+
+    setSelectedAnswer(answerIndex);
+    setShowQuizExplanation(true);
+
+    const currentQuestion = quizQuestions[currentQuestionIndex];
+    const isCorrect = answerIndex === currentQuestion.correctAnswer;
+
+    if (isCorrect) {
+      setQuizScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
+    } else {
+      setQuizScore(prev => ({ correct: prev.correct, total: prev.total + 1 }));
+    }
+  };
+
+  const handleNextQuestion = async () => {
+    if (currentQuestionIndex < quizQuestions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setSelectedAnswer(null);
+      setShowQuizExplanation(false);
+    } else {
+      // Quiz completed
+      const percentage = Math.round((quizScore.correct / quizScore.total) * 100);
+      const message = percentage >= 80
+        ? `Perfect! You got ${quizScore.correct} out of ${quizScore.total} correct!`
+        : percentage >= 60
+        ? `Good job! You got ${quizScore.correct} out of ${quizScore.total}. Keep studying!`
+        : `You got ${quizScore.correct} out of ${quizScore.total}. Review the material and try again!`;
+
+      try {
+        setIsProcessing(true);
+        const videoUrl = await A2EService.createLipsync(message, selectedAvatar, lang2);
+        setCurrentVideoUrl(videoUrl);
+      } catch (error) {
+        console.error('❌ Score speak error:', error);
+      } finally {
+        setIsProcessing(false);
+      }
+
+      Alert.alert('Quiz Complete!', message, [
+        { text: 'Done', onPress: () => setQuizQuestions([]) }
+      ]);
+    }
+  };
+
   // Navigation
   const handleNext = () => {
     if (currentMessageIndex < messages.length - 1) {
@@ -595,6 +770,8 @@ export default function AvatarScreen() {
                     {learningMode === 'conversation' && '💬 Talk'}
                     {learningMode === 'correction' && '✏️ Check'}
                     {learningMode === 'wordofday' && '📚 Word'}
+                    {learningMode === 'flashcard' && '🃏 Flash'}
+                    {learningMode === 'quiz' && '🎯 Quiz'}
                   </Text>
                   <IconButton icon="chevron-down" size={16} style={styles.modeDropdownIcon} />
                 </TouchableOpacity>
@@ -619,6 +796,16 @@ export default function AvatarScreen() {
                 onPress={() => { setLearningMode('wordofday'); setModeMenuVisible(false); }}
                 title="📚 Word of the Day"
                 leadingIcon={learningMode === 'wordofday' ? 'check' : undefined}
+              />
+              <Menu.Item
+                onPress={() => { setLearningMode('flashcard'); setModeMenuVisible(false); }}
+                title="🃏 Flashcard Mode"
+                leadingIcon={learningMode === 'flashcard' ? 'check' : undefined}
+              />
+              <Menu.Item
+                onPress={() => { setLearningMode('quiz'); setModeMenuVisible(false); }}
+                title="🎯 Grammar Quiz"
+                leadingIcon={learningMode === 'quiz' ? 'check' : undefined}
               />
             </Menu>
           </View>
@@ -1145,6 +1332,240 @@ export default function AvatarScreen() {
                         >
                           Get New Word
                         </Button>
+                      </Card.Content>
+                    </Card>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* MODE 10: Flashcard Mode */}
+            {learningMode === 'flashcard' && (
+              <>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  🃏 Flashcard Mode
+                </Text>
+
+                {/* Start Flashcard Button */}
+                {flashcardSet.length === 0 && (
+                  <Card style={styles.textCard} mode="outlined">
+                    <Card.Content>
+                      <Text variant="bodyMedium" style={{ marginBottom: 12, textAlign: 'center' }}>
+                        Practice vocabulary with flashcards!
+                      </Text>
+                      <Button
+                        mode="contained"
+                        icon="cards"
+                        onPress={handleStartFlashcard}
+                        disabled={isProcessing}
+                      >
+                        Start Flashcard Practice
+                      </Button>
+                    </Card.Content>
+                  </Card>
+                )}
+
+                {/* Flashcard Set */}
+                {flashcardSet.length > 0 && (
+                  <>
+                    {/* Progress */}
+                    <Card style={styles.textCard} mode="outlined">
+                      <Card.Content>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <Text variant="labelLarge">
+                            Card {currentFlashcardIndex + 1} / {flashcardSet.length}
+                          </Text>
+                          <Text variant="labelLarge" style={{ color: '#6750A4' }}>
+                            Score: {flashcardScore.correct} / {flashcardScore.total}
+                          </Text>
+                        </View>
+                      </Card.Content>
+                    </Card>
+
+                    {/* Current Flashcard */}
+                    <Card style={styles.textCard} mode="outlined">
+                      <Card.Content>
+                        <Text variant="headlineMedium" style={{ marginBottom: 16, fontWeight: 'bold', color: '#6750A4', textAlign: 'center' }}>
+                          {flashcardSet[currentFlashcardIndex].word}
+                        </Text>
+
+                        <TextInput
+                          value={flashcardInput}
+                          onChangeText={setFlashcardInput}
+                          placeholder="Type the translation..."
+                          mode="outlined"
+                          maxLength={100}
+                          style={styles.textInput}
+                          disabled={isProcessing || showFlashcardAnswer}
+                        />
+
+                        {!showFlashcardAnswer && (
+                          <Button
+                            mode="contained"
+                            icon="check"
+                            onPress={handleCheckFlashcard}
+                            disabled={!flashcardInput.trim() || isProcessing}
+                            style={{ marginTop: 8 }}
+                          >
+                            Check Answer
+                          </Button>
+                        )}
+
+                        {showFlashcardAnswer && (
+                          <View style={{ marginTop: 12 }}>
+                            <Text variant="labelLarge" style={{ marginBottom: 8, color: '#2E7D32' }}>
+                              ✅ Correct Answer:
+                            </Text>
+                            <Text variant="bodyLarge" style={{ marginBottom: 16, fontWeight: 'bold' }}>
+                              {flashcardSet[currentFlashcardIndex].answer}
+                            </Text>
+                            <Button
+                              mode="contained"
+                              icon="arrow-right"
+                              onPress={handleNextFlashcard}
+                              disabled={isProcessing}
+                            >
+                              {currentFlashcardIndex < flashcardSet.length - 1 ? 'Next Card' : 'Finish'}
+                            </Button>
+                          </View>
+                        )}
+                      </Card.Content>
+                    </Card>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* MODE 12: Grammar Quiz Mode */}
+            {learningMode === 'quiz' && (
+              <>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  🎯 Grammar Quiz
+                </Text>
+
+                {/* Start Quiz Button */}
+                {quizQuestions.length === 0 && (
+                  <Card style={styles.textCard} mode="outlined">
+                    <Card.Content>
+                      <Text variant="bodyMedium" style={{ marginBottom: 12, textAlign: 'center' }}>
+                        Test your grammar knowledge!
+                      </Text>
+                      <Button
+                        mode="contained"
+                        icon="text"
+                        onPress={() => handleStartQuiz('Present Tense')}
+                        disabled={isProcessing}
+                        style={{ marginBottom: 8 }}
+                      >
+                        Present Tense Quiz
+                      </Button>
+                      <Button
+                        mode="contained"
+                        icon="text"
+                        onPress={() => handleStartQuiz('Past Tense')}
+                        disabled={isProcessing}
+                        style={{ marginBottom: 8 }}
+                      >
+                        Past Tense Quiz
+                      </Button>
+                      <Button
+                        mode="contained"
+                        icon="text"
+                        onPress={() => handleStartQuiz('Prepositions')}
+                        disabled={isProcessing}
+                      >
+                        Prepositions Quiz
+                      </Button>
+                    </Card.Content>
+                  </Card>
+                )}
+
+                {/* Quiz Questions */}
+                {quizQuestions.length > 0 && (
+                  <>
+                    {/* Progress */}
+                    <Card style={styles.textCard} mode="outlined">
+                      <Card.Content>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <Text variant="labelLarge">
+                            Question {currentQuestionIndex + 1} / {quizQuestions.length}
+                          </Text>
+                          <Text variant="labelLarge" style={{ color: '#6750A4' }}>
+                            Score: {quizScore.correct} / {quizScore.total}
+                          </Text>
+                        </View>
+                      </Card.Content>
+                    </Card>
+
+                    {/* Current Question */}
+                    <Card style={styles.textCard} mode="outlined">
+                      <Card.Content>
+                        <Text variant="bodyLarge" style={{ marginBottom: 16, fontWeight: 'bold' }}>
+                          {quizQuestions[currentQuestionIndex].question}
+                        </Text>
+
+                        {/* Options */}
+                        {quizQuestions[currentQuestionIndex].options.map((option, index) => {
+                          const isCorrect = index === quizQuestions[currentQuestionIndex].correctAnswer;
+                          const isSelected = selectedAnswer === index;
+                          const showResult = showQuizExplanation;
+
+                          let buttonColor = '#E0E0E0';
+                          let textColor = '#333';
+
+                          if (showResult) {
+                            if (isCorrect) {
+                              buttonColor = '#C8E6C9';
+                              textColor = '#2E7D32';
+                            } else if (isSelected && !isCorrect) {
+                              buttonColor = '#FFCDD2';
+                              textColor = '#C62828';
+                            }
+                          } else if (isSelected) {
+                            buttonColor = '#E8DEF8';
+                            textColor = '#6750A4';
+                          }
+
+                          return (
+                            <TouchableOpacity
+                              key={index}
+                              onPress={() => handleSelectAnswer(index)}
+                              disabled={showResult || isProcessing}
+                              style={{
+                                backgroundColor: buttonColor,
+                                padding: 16,
+                                borderRadius: 8,
+                                marginBottom: 8,
+                                borderWidth: 2,
+                                borderColor: isSelected ? '#6750A4' : 'transparent',
+                              }}
+                            >
+                              <Text variant="bodyMedium" style={{ color: textColor, fontWeight: isSelected ? 'bold' : 'normal' }}>
+                                {String.fromCharCode(65 + index)}) {option}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+
+                        {/* Explanation */}
+                        {showQuizExplanation && (
+                          <View style={{ marginTop: 16 }}>
+                            <Text variant="labelLarge" style={{ marginBottom: 8, color: selectedAnswer === quizQuestions[currentQuestionIndex].correctAnswer ? '#2E7D32' : '#C62828' }}>
+                              {selectedAnswer === quizQuestions[currentQuestionIndex].correctAnswer ? '✅ Correct!' : '❌ Incorrect'}
+                            </Text>
+                            <Text variant="bodyMedium" style={{ marginBottom: 16, color: '#666' }}>
+                              {quizQuestions[currentQuestionIndex].explanation}
+                            </Text>
+                            <Button
+                              mode="contained"
+                              icon="arrow-right"
+                              onPress={handleNextQuestion}
+                              disabled={isProcessing}
+                            >
+                              {currentQuestionIndex < quizQuestions.length - 1 ? 'Next Question' : 'Finish Quiz'}
+                            </Button>
+                          </View>
+                        )}
                       </Card.Content>
                     </Card>
                   </>
