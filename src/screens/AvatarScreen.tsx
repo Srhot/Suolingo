@@ -707,9 +707,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   videoFrame: {
-    width: '85%',
-    height: '95%',
-    borderRadius: 120,
+    width: 220, // Fixed width for consistent oval shape
+    height: 260, // Fixed height for portrait oval
+    borderRadius: 110, // Half of width for perfect oval
     overflow: 'hidden',
     borderWidth: 4,
     borderColor: '#6750A4',
@@ -726,17 +726,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden', // IMPORTANT: Clips content to oval shape
-    borderRadius: 120, // Match parent frame
+    borderRadius: 110, // Match parent frame
   },
   video: {
     width: '120%',  // Wider to fill oval
     height: '120%', // Taller to fill oval
     transform: [{ scale: 0.55 }], // More zoom out - show full head + hair
+    borderRadius: 110, // CRITICAL: Makes video itself oval-shaped
   },
   staticImage: {
     width: '120%',  // Wider to fill oval
     height: '120%', // Taller to fill oval
     transform: [{ scale: 0.55 }], // More zoom out - show full head + hair
+    borderRadius: 110, // CRITICAL: Makes image itself oval-shaped
   },
   loadingOverlay: {
     position: 'absolute',
@@ -747,7 +749,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.95)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 120,
+    borderRadius: 110,
   },
   loadingText: {
     color: '#6750A4',
