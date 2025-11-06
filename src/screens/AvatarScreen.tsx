@@ -10,6 +10,7 @@ import {
   ScrollView,
   Keyboard,
   TouchableWithoutFeedback,
+  TouchableOpacity,
 } from 'react-native';
 import {
   Text,
@@ -315,31 +316,59 @@ export default function AvatarScreen() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        {/* Header - Avatar Seçimi */}
-        <View style={styles.header}>
-          <Menu
-            visible={menuVisible}
-            onDismiss={closeMenu}
-            anchor={
-              <Button mode="outlined" onPress={openMenu} icon="account">
-                {selectedAvatar.title}
-              </Button>
-            }
-          >
-            {AVATARS.map((avatar) => (
-              <Menu.Item
-                key={avatar.id}
-                onPress={() => handleAvatarSelect(avatar)}
-                title={avatar.title}
-                leadingIcon={avatar.gender === 'male' ? 'face-man' : 'face-woman'}
+        {/* 🆕 MODERN COMPACT HEADER - Avatar Badge Style */}
+        <View style={styles.compactHeader}>
+          <View style={styles.avatarBadge}>
+            {/* Avatar Thumbnail */}
+            {selectedAvatar.thumbnailUrl && (
+              <Image
+                source={selectedAvatar.thumbnailUrl}
+                style={styles.avatarThumbnail}
+                resizeMode="cover"
               />
-            ))}
-          </Menu>
+            )}
+
+            {/* Avatar Name + Selector */}
+            <Menu
+              visible={menuVisible}
+              onDismiss={closeMenu}
+              anchor={
+                <TouchableOpacity
+                  onPress={openMenu}
+                  style={styles.avatarNameContainer}
+                >
+                  <View>
+                    <Text variant="labelSmall" style={styles.avatarLabel}>
+                      Teacher
+                    </Text>
+                    <Text variant="titleSmall" style={styles.avatarName}>
+                      {selectedAvatar.name}
+                    </Text>
+                  </View>
+                  <IconButton icon="chevron-down" size={20} style={styles.dropdownIcon} />
+                </TouchableOpacity>
+              }
+            >
+              {AVATARS.map((avatar) => (
+                <Menu.Item
+                  key={avatar.id}
+                  onPress={() => handleAvatarSelect(avatar)}
+                  title={avatar.title}
+                  leadingIcon={avatar.gender === 'male' ? 'face-man' : 'face-woman'}
+                />
+              ))}
+            </Menu>
+          </View>
+
+          {/* Right side - Mode indicator */}
+          <View style={styles.modeIndicator}>
+            <Text variant="labelSmall" style={styles.modeText}>
+              🌐 Translation Mode
+            </Text>
+          </View>
         </View>
 
-        <Divider />
-
-        {/* 🆕 IMPROVED Avatar Video Section with Oval Frame */}
+        {/* 🆕 COMPACT Avatar Video Section */}
         <View style={[styles.videoSection, { backgroundColor: '#ffffff' }]}>
           <View style={styles.videoFrame}>
             <View style={styles.videoContainer}>
@@ -403,8 +432,6 @@ export default function AvatarScreen() {
             </View>
           )}
         </View>
-
-        <Divider />
 
         {/* 🆕 IMPROVED DUAL TEXT AREAS */}
         <KeyboardAvoidingView
@@ -612,25 +639,75 @@ const styles = StyleSheet.create({
   flex1: {
     flex: 1,
   },
-  header: {
-    padding: 16,
-    paddingTop: 60,
+  // 🆕 Modern Compact Header Styles
+  compactHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 60,
+    paddingBottom: 12,
+    backgroundColor: '#F5F5F5',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
+  avatarBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatarThumbnail: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: '#6750A4',
+    backgroundColor: '#fff',
+  },
+  avatarNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  avatarLabel: {
+    color: '#666',
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  avatarName: {
+    fontWeight: '600',
+    color: '#333',
+    fontSize: 16,
+  },
+  dropdownIcon: {
+    margin: 0,
+  },
+  modeIndicator: {
+    backgroundColor: '#E8DEF8',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  modeText: {
+    color: '#6750A4',
+    fontWeight: '600',
+    fontSize: 11,
+  },
+  // 🆕 Compact Video Section
   videoSection: {
-    height: 400, // Increased from 350 for more space
+    height: 280, // Reduced from 400 for more space for text areas
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
     paddingHorizontal: 16,
-    paddingVertical: 20,
+    paddingVertical: 12,
   },
   videoFrame: {
-    width: '85%', // Increased from 75% to show full head
-    height: '98%', // Increased from 95% to show hair
-    borderRadius: 140, // Adjusted for larger frame
+    width: '85%',
+    height: '95%',
+    borderRadius: 120,
     overflow: 'hidden',
-    borderWidth: 5,
+    borderWidth: 4,
     borderColor: '#6750A4',
     backgroundColor: '#000',
     shadowColor: '#000',
@@ -662,7 +739,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.95)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 150,
+    borderRadius: 120,
   },
   loadingText: {
     color: '#6750A4',
