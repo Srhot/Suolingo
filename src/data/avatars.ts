@@ -13,7 +13,12 @@ export const AVATARS: Avatar[] = [
     isStaticImage: false,
     // A2E AI custom avatar ID (verified working - Nov 3 2025)
     a2eCreatorId: '6908f1152897cb003ad5b739',
-    // A2E TTS voice ID - Turkish Male (TR-TR-AhmetNeural)
+    // Multi-language voice IDs
+    voiceIds: {
+      tr: '63a549c1ad2a27fe43d966e1', // Turkish Male (TR-TR-AhmetNeural)
+      en: '63a549c3ad2a27fe43d966e3', // English Male (en-US-GuyNeural)
+    },
+    // Legacy Turkish voice ID for backwards compatibility
     ttsVoiceId: '63a549c1ad2a27fe43d966e1',
   },
   {
@@ -26,7 +31,12 @@ export const AVATARS: Avatar[] = [
     isStaticImage: false,
     // A2E AI custom avatar ID (verified working - Nov 3 2025)
     a2eCreatorId: '6909359a769b46003b650dc5',
-    // A2E TTS voice ID - Turkish Female (TR-TR-EmelNeural)
+    // Multi-language voice IDs
+    voiceIds: {
+      tr: '63a549dcad2a27fe43d96732', // Turkish Female (TR-TR-EmelNeural)
+      en: '63a549ddad2a27fe43d96733', // English Female (en-US-JennyNeural)
+    },
+    // Legacy Turkish voice ID for backwards compatibility
     ttsVoiceId: '63a549dcad2a27fe43d96732',
   },
 ];

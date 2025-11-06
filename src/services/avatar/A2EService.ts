@@ -28,16 +28,28 @@ class A2EService {
   /**
    * Create lip-sync video from text
    */
-  async createLipsync(text: string, avatar: Avatar): Promise<string> {
+  async createLipsync(text: string, avatar: Avatar, language: 'tr' | 'en' = 'en'): Promise<string> {
     try {
       console.log('🎬 A2E Lip-sync starting...');
       console.log('Text:', text.substring(0, 50) + '...');
       console.log('Avatar:', avatar.name);
+      console.log('Language:', language);
       console.log('Creator ID:', avatar.a2eCreatorId);
 
       if (!avatar.a2eCreatorId) {
         throw new Error('A2E creator ID not found for avatar');
       }
+
+      // Select appropriate voice ID based on language
+      let voiceId: string;
+      if (avatar.voiceIds && avatar.voiceIds[language]) {
+        voiceId = avatar.voiceIds[language];
+      } else {
+        // Fallback to legacy ttsVoiceId (Turkish)
+        voiceId = avatar.ttsVoiceId || '63a549c1ad2a27fe43d966e1';
+      }
+
+      console.log('🗣️ Selected voice ID:', voiceId);
 
       // Step 1: Generate TTS audio using A2E's built-in TTS
       console.log('📢 Generating TTS audio...');
@@ -45,7 +57,7 @@ class A2EService {
         `${this.baseURL}/api/v1/video/send_tts`, // Correct endpoint from network analysis
         {
           msg: text,
-          tts_id: avatar.ttsVoiceId || '63a549c1ad2a27fe43d966e1', // Use avatar's voice ID
+          tts_id: voiceId, // Use language-specific voice ID
           speech_rate: 1,
         },
         {

@@ -140,8 +140,8 @@ export default function AvatarScreen() {
     try {
       console.log(`🚀 Starting TTS for language: ${lang}`);
 
-      // Try A2E lip-sync video generation
-      const videoUrl = await A2EService.createLipsync(newMessage.text, selectedAvatar);
+      // Try A2E lip-sync video generation with language-specific voice
+      const videoUrl = await A2EService.createLipsync(newMessage.text, selectedAvatar, lang);
 
       setMessages((prev) =>
         prev.map((msg) =>
@@ -614,19 +614,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   videoSection: {
-    height: 300,
+    height: 350,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 20,
   },
   videoFrame: {
-    width: '90%',
-    height: '90%',
-    borderRadius: 150,
+    width: '75%',
+    height: '95%',
+    borderRadius: 120,
     overflow: 'hidden',
-    borderWidth: 4,
+    borderWidth: 5,
     borderColor: '#6750A4',
     backgroundColor: '#000',
     shadowColor: '#000',
