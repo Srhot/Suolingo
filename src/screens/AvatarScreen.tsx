@@ -30,7 +30,11 @@ import ElevenLabsService, { ElevenLabsVoice } from '@/services/voice/ElevenLabsS
 import A2EService from '@/services/avatar/A2EService';
 import DeepgramService from '@/services/voice/DeepgramService';
 import TranslationService from '@/services/translation/TranslationService';
+import GeminiService from '@/services/ai/GeminiService';
 import { LanguageCode } from '@/types/Translation';
+
+// 🆕 Learning Modes
+type LearningMode = 'translation' | 'conversation' | 'correction' | 'wordofday';
 
 export default function AvatarScreen() {
   const theme = useTheme();
@@ -46,6 +50,30 @@ export default function AvatarScreen() {
   );
   const [voiceMenuVisible, setVoiceMenuVisible] = useState(false);
   const [useElevenLabs, setUseElevenLabs] = useState(false); // 🔄 Default: A2E (Built-in) - ElevenLabs ready for future
+
+  // 🆕 Learning Mode Selection
+  const [learningMode, setLearningMode] = useState<LearningMode>('translation');
+  const [modeMenuVisible, setModeMenuVisible] = useState(false);
+
+  // 🆕 Conversation Mode State
+  const [conversationHistory, setConversationHistory] = useState<Array<{ role: string; content: string }>>([]);
+  const [conversationInput, setConversationInput] = useState('');
+
+  // 🆕 Correction Mode State
+  const [correctionInput, setCorrectionInput] = useState('');
+  const [correctionResult, setCorrectionResult] = useState<{
+    corrected: string;
+    hasError: boolean;
+    explanation: string;
+  } | null>(null);
+
+  // 🆕 Word of the Day State
+  const [wordOfTheDay, setWordOfTheDay] = useState<{
+    word: string;
+    definition: string;
+    examples: string[];
+    translation: string;
+  } | null>(null);
 
   // Dual Text Areas (Turkish ↔ English)
   const [textInput1, setTextInput1] = useState('');
@@ -327,6 +355,146 @@ export default function AvatarScreen() {
         console.error('❌ Start recording error:', error);
         Alert.alert('Hata', 'Kayıt başlatılamadı');
       }
+    }
+  };
+
+  // 🆕 MODE 4: Conversation Mode Handlers
+  const handleStartConversation = async () => {
+    try {
+      setIsProcessing(true);
+      const lang = lang2; // Conversation in target language (English default)
+
+      console.log('🗣️ Starting conversation...');
+      const starter = await GeminiService.generateConversationStarter(lang);
+
+      setConversationHistory([{ role: 'teacher', content: starter }]);
+
+      // Avatar speaks the starter question
+      const videoUrl = await A2EService.createLipsync(starter, selectedAvatar, lang);
+      setCurrentVideoUrl(videoUrl);
+
+      console.log('✅ Conversation started');
+    } catch (error) {
+      console.error('❌ Conversation start error:', error);
+      Alert.alert('Hata', 'Sohbet başlatılamadı');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleConversationSend = async () => {
+    if (!conversationInput.trim()) {
+      Alert.alert('Uyarı', 'Lütfen bir mesaj yazın');
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      const userMessage = conversationInput.trim();
+      const lang = lang2;
+
+      // Add user message to history
+      const newHistory = [...conversationHistory, { role: 'user', content: userMessage }];
+      setConversationHistory(newHistory);
+      setConversationInput('');
+
+      console.log('💬 Generating AI response...');
+      const aiResponse = await GeminiService.generateConversationResponse(
+        userMessage,
+        newHistory,
+        lang
+      );
+
+      // Add AI response to history
+      setConversationHistory([...newHistory, { role: 'teacher', content: aiResponse }]);
+
+      // Avatar speaks the response
+      const videoUrl = await A2EService.createLipsync(aiResponse, selectedAvatar, lang);
+      setCurrentVideoUrl(videoUrl);
+
+      console.log('✅ Conversation response ready');
+    } catch (error) {
+      console.error('❌ Conversation error:', error);
+      Alert.alert('Hata', 'Cevap oluşturulamadı');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // 🆕 MODE 5: Sentence Correction Handler
+  const handleCorrectSentence = async () => {
+    if (!correctionInput.trim()) {
+      Alert.alert('Uyarı', 'Lütfen düzeltilecek cümleyi yazın');
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      const targetLang = lang2; // Language being learned
+      const explanationLang = lang1; // Native language for explanations
+
+      console.log('📝 Checking sentence...');
+      const result = await GeminiService.correctSentence(
+        correctionInput.trim(),
+        targetLang,
+        explanationLang
+      );
+
+      setCorrectionResult(result);
+
+      // Avatar speaks the correction
+      const messageToSpeak = result.hasError
+        ? `Corrected: ${result.corrected}. ${result.explanation}`
+        : `Perfect! ${result.explanation}`;
+
+      const videoUrl = await A2EService.createLipsync(messageToSpeak, selectedAvatar, targetLang);
+      setCurrentVideoUrl(videoUrl);
+
+      console.log('✅ Sentence checked');
+    } catch (error) {
+      console.error('❌ Correction error:', error);
+      Alert.alert('Hata', 'Cümle kontrol edilemedi');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // 🆕 MODE 6: Word of the Day Handler
+  const handleGenerateWordOfTheDay = async () => {
+    try {
+      setIsProcessing(true);
+      const lang = lang2; // Target language
+
+      console.log('📚 Generating word of the day...');
+      const word = await GeminiService.generateWordOfTheDay(lang, 'intermediate');
+
+      setWordOfTheDay(word);
+
+      // Avatar introduces the word
+      const introduction = `Today's word is: ${word.word}. ${word.definition}`;
+      const videoUrl = await A2EService.createLipsync(introduction, selectedAvatar, lang);
+      setCurrentVideoUrl(videoUrl);
+
+      console.log('✅ Word of the day ready');
+    } catch (error) {
+      console.error('❌ Word of the day error:', error);
+      Alert.alert('Hata', 'Kelime oluşturulamadı');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSpeakExample = async (example: string) => {
+    try {
+      setIsProcessing(true);
+      const lang = lang2;
+      const videoUrl = await A2EService.createLipsync(example, selectedAvatar, lang);
+      setCurrentVideoUrl(videoUrl);
+    } catch (error) {
+      console.error('❌ Example speak error:', error);
+      Alert.alert('Hata', 'Örnek konuşturulamadı');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
