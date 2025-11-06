@@ -90,12 +90,10 @@ class ElevenLabsService {
         `${this.baseURL}/v1/text-to-speech/${voiceId}`,
         {
           text,
-          model_id: 'eleven_multilingual_v2', // 🆕 MULTILINGUAL MODEL - Auto-detects language
+          model_id: 'eleven_turbo_v2', // 🆕 TURBO V2 - Faster, multilingual, works with free tier
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.75,
-            style: 0.0,
-            use_speaker_boost: true,
           },
         },
         {
@@ -122,8 +120,11 @@ class ElevenLabsService {
 
       return audioDataUri;
     } catch (error: any) {
-      console.error('❌ ElevenLabs TTS Error:', error.response?.data || error.message);
-      throw new Error('Failed to generate speech');
+      console.error('❌ ElevenLabs TTS Error - Full error:', error);
+      console.error('❌ Response data:', error.response?.data);
+      console.error('❌ Response status:', error.response?.status);
+      console.error('❌ Error message:', error.message);
+      throw new Error(`Failed to generate speech: ${error.response?.data?.detail?.message || error.message}`);
     }
   }
 
