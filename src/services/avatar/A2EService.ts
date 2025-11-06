@@ -42,14 +42,20 @@ class A2EService {
 
       // Select appropriate voice ID based on language
       let voiceId: string;
-      if (avatar.voiceIds && avatar.voiceIds[language]) {
-        voiceId = avatar.voiceIds[language];
-      } else {
-        // Fallback to legacy ttsVoiceId (Turkish)
-        voiceId = avatar.ttsVoiceId || '63a549c1ad2a27fe43d966e1';
+      let usingFallbackVoice = false;
+
+      // For now, always use Turkish voice (English voice IDs not working in A2E)
+      // TODO: Get real English voice IDs from A2E API /v1/anchor/voice_list
+      voiceId = avatar.ttsVoiceId || '63a549c1ad2a27fe43d966e1';
+
+      if (language === 'en') {
+        console.warn('⚠️  English voice not available in A2E yet. Using Turkish voice as fallback.');
+        console.warn('💡 To fix: Get English voice IDs from A2E API: /v1/anchor/voice_list');
+        usingFallbackVoice = true;
       }
 
       console.log('🗣️ Selected voice ID:', voiceId);
+      console.log('🌐 Target language:', language, usingFallbackVoice ? '(using fallback voice)' : '');
 
       // Step 1: Generate TTS audio using A2E's built-in TTS
       console.log('📢 Generating TTS audio...');
@@ -57,7 +63,7 @@ class A2EService {
         `${this.baseURL}/api/v1/video/send_tts`, // Correct endpoint from network analysis
         {
           msg: text,
-          tts_id: voiceId, // Use language-specific voice ID
+          tts_id: voiceId, // Use voice ID (Turkish for now)
           speech_rate: 1,
         },
         {
@@ -75,7 +81,7 @@ class A2EService {
       const traceId = ttsResponse.data?.trace_id;
 
       if (!audioUrl || ttsResponse.data?.code !== 0) {
-        throw new Error('Failed to generate TTS audio - no URL returned');
+        throw new Error(`Failed to generate TTS audio - API code: ${ttsResponse.data?.code}, msg: ${ttsResponse.data?.msg}`);
       }
 
       console.log('✅ TTS audio generated:', audioUrl);

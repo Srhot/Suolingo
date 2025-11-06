@@ -725,10 +725,12 @@ const styles = StyleSheet.create({
   video: {
     width: '100%',
     height: '100%',
+    transform: [{ scale: 0.75 }], // Zoom out - show full head including eyebrows
   },
   staticImage: {
     width: '100%',
     height: '100%',
+    transform: [{ scale: 0.75 }], // Zoom out - show full head including eyebrows
   },
   loadingOverlay: {
     position: 'absolute',
