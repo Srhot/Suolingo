@@ -198,6 +198,15 @@ export default function AvatarScreen() {
         setIsRecording(false);
         setRecording(null);
 
+        // FIXED: Reset audio mode back to playback mode after recording
+        // This ensures video playback volume is not affected by recording session
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+        });
+        console.log('✅ Audio mode reset to playback');
+
         try {
           // Transcribe audio
           const transcript = await DeepgramService.transcribeAudio(uri);
@@ -729,15 +738,15 @@ const styles = StyleSheet.create({
     borderRadius: 110, // Match parent frame
   },
   video: {
-    width: '120%',  // Wider to fill oval
-    height: '120%', // Taller to fill oval
-    transform: [{ scale: 0.55 }], // More zoom out - show full head + hair
+    width: '140%',  // Much wider to fill oval and minimize black space
+    height: '140%', // Much taller to fill oval and minimize black space
+    transform: [{ scale: 0.7 }], // Balanced zoom - fills frame but shows full head
     borderRadius: 110, // CRITICAL: Makes video itself oval-shaped
   },
   staticImage: {
-    width: '120%',  // Wider to fill oval
-    height: '120%', // Taller to fill oval
-    transform: [{ scale: 0.55 }], // More zoom out - show full head + hair
+    width: '140%',  // Much wider to fill oval and minimize black space
+    height: '140%', // Much taller to fill oval and minimize black space
+    transform: [{ scale: 0.7 }], // Balanced zoom - fills frame but shows full head
     borderRadius: 110, // CRITICAL: Makes image itself oval-shaped
   },
   loadingOverlay: {
