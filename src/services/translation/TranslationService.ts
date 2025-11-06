@@ -37,9 +37,9 @@ class TranslationService {
         return text;
       }
 
-      // If no API key, use fallback method
+      // If no API key, use fallback method (MyMemory API - free)
       if (!this.apiKey) {
-        console.warn('⚠️ Translation API key not found, using fallback');
+        console.log('🌐 Using free MyMemory Translation API');
         return await this.fallbackTranslation(text, sourceLang, targetLang);
       }
 

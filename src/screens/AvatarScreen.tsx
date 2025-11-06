@@ -335,51 +335,66 @@ export default function AvatarScreen() {
 
         <Divider />
 
-        {/* 🆕 IMPROVED Avatar Video Section */}
-        <View style={[styles.videoSection, { backgroundColor: theme.colors.surfaceVariant }]}>
-          <View style={styles.videoContainer}>
-            {currentVideoUrl ? (
-              <Video
-                ref={videoRef}
-                source={{ uri: currentVideoUrl }}
-                style={styles.video}
-                resizeMode={ResizeMode.CONTAIN}
-                shouldPlay
-                isLooping={false}
-                useNativeControls={false}
-                onPlaybackStatusUpdate={(status) => {
-                  if (status.isLoaded && status.didJustFinish) {
+        {/* 🆕 IMPROVED Avatar Video Section with Oval Frame */}
+        <View style={[styles.videoSection, { backgroundColor: '#ffffff' }]}>
+          <View style={styles.videoFrame}>
+            <View style={styles.videoContainer}>
+              {currentVideoUrl ? (
+                <Video
+                  key={currentVideoUrl}
+                  ref={videoRef}
+                  source={{ uri: currentVideoUrl }}
+                  style={styles.video}
+                  resizeMode={ResizeMode.COVER}
+                  shouldPlay={true}
+                  isLooping={false}
+                  useNativeControls={false}
+                  onPlaybackStatusUpdate={(status) => {
+                    if (status.isLoaded && status.didJustFinish) {
+                      console.log('🎬 Video finished, returning to idle');
+                      setCurrentVideoUrl(null);
+                    }
+                  }}
+                  onLoad={() => {
+                    console.log('🎬 Video loaded successfully');
+                  }}
+                  onError={(error) => {
+                    console.error('❌ Video playback error:', error);
                     setCurrentVideoUrl(null);
+                  }}
+                />
+              ) : selectedAvatar.isStaticImage ? (
+                <Image
+                  source={selectedAvatar.idleVideoUrl}
+                  style={styles.staticImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Video
+                  key="idle-video"
+                  source={
+                    typeof selectedAvatar.idleVideoUrl === 'string'
+                      ? { uri: selectedAvatar.idleVideoUrl }
+                      : selectedAvatar.idleVideoUrl
                   }
-                }}
-              />
-            ) : selectedAvatar.isStaticImage ? (
-              <Image
-                source={selectedAvatar.idleVideoUrl}
-                style={styles.staticImage}
-                resizeMode="contain"
-              />
-            ) : (
-              <Video
-                source={
-                  typeof selectedAvatar.idleVideoUrl === 'string'
-                    ? { uri: selectedAvatar.idleVideoUrl }
-                    : selectedAvatar.idleVideoUrl
-                }
-                style={styles.video}
-                resizeMode={ResizeMode.CONTAIN}
-                shouldPlay
-                isLooping
-                useNativeControls={false}
-              />
-            )}
+                  style={styles.video}
+                  resizeMode={ResizeMode.COVER}
+                  shouldPlay
+                  isLooping
+                  useNativeControls={false}
+                />
+              )}
+            </View>
           </View>
 
           {isProcessing && (
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color="#fff" />
+              <ActivityIndicator size="large" color="#6750A4" />
               <Text variant="bodySmall" style={styles.loadingText}>
-                Avatar videosu oluşturuluyor... (~15 saniye)
+                🎬 Avatar videosu oluşturuluyor...
+              </Text>
+              <Text variant="bodySmall" style={styles.loadingSubtext}>
+                Bu işlem 30-60 saniye sürebilir
               </Text>
             </View>
           )}
@@ -599,18 +614,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   videoSection: {
-    height: 280,
+    height: 300,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-    borderRadius: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  videoFrame: {
+    width: '90%',
+    height: '90%',
+    borderRadius: 150,
+    overflow: 'hidden',
+    borderWidth: 4,
+    borderColor: '#6750A4',
+    backgroundColor: '#000',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   videoContainer: {
     width: '100%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
   },
   video: {
     width: '100%',
@@ -626,13 +655,20 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(255,255,255,0.95)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 150,
   },
   loadingText: {
-    color: '#fff',
-    marginTop: 8,
+    color: '#6750A4',
+    marginTop: 12,
+    fontWeight: '600',
+  },
+  loadingSubtext: {
+    color: '#6750A4',
+    marginTop: 4,
+    opacity: 0.7,
   },
   inputSection: {
     flex: 1,
