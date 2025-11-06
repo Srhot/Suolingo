@@ -1,4 +1,5 @@
 import axios from 'axios';
+import * as FileSystem from 'expo-file-system';
 import { DEEPGRAM_API_KEY, DEEPGRAM_BASE_URL } from '@env';
 
 class DeepgramService {
@@ -24,16 +25,32 @@ class DeepgramService {
         throw new Error('Deepgram API key not configured');
       }
 
-      // Read file as blob
-      const fileResponse = await fetch(audioFileUri);
-      const audioBlob = await fileResponse.blob();
+      // Read file using FileSystem (more reliable than fetch for local files)
+      const fileInfo = await FileSystem.getInfoAsync(audioFileUri);
 
-      console.log('Audio blob size:', audioBlob.size);
-      console.log('Audio blob type:', audioBlob.type);
+      if (!fileInfo.exists) {
+        throw new Error('Audio file does not exist');
+      }
 
-      if (audioBlob.size === 0) {
+      console.log('📁 File size:', fileInfo.size, 'bytes');
+
+      if (fileInfo.size === 0) {
         throw new Error('Audio file is empty');
       }
+
+      // Read file as base64 and convert to binary
+      const base64Audio = await FileSystem.readAsStringAsync(audioFileUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      // Convert base64 to binary array (React Native compatible)
+      const binaryString = atob(base64Audio);
+      const binaryArray = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        binaryArray[i] = binaryString.charCodeAt(i);
+      }
+
+      console.log('📦 Binary array size:', binaryArray.length, 'bytes');
 
       // Determine content type based on file extension
       let contentType = 'audio/wav'; // Default fallback
@@ -49,19 +66,21 @@ class DeepgramService {
         contentType = 'audio/webm';
       }
 
-      console.log('Audio file extension:', audioFileUri.split('.').pop());
-      console.log('Using content type:', contentType);
+      console.log('🎵 Audio format:', audioFileUri.split('.').pop());
+      console.log('📤 Content-Type:', contentType);
 
       // Use multi-language model (detects Turkish and English automatically)
       const response = await axios.post(
         `${this.baseURL}/v1/listen?model=nova-2&detect_language=true&punctuate=true`,
-        audioBlob,
+        binaryArray,
         {
           headers: {
             'Authorization': `Token ${this.apiKey}`,
             'Content-Type': contentType,
           },
           timeout: 30000, // 30 second timeout
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
         }
       );
 
