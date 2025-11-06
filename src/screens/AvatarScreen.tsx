@@ -26,7 +26,7 @@ import { Video, ResizeMode, Audio } from 'expo-av';
 import * as Speech from 'expo-speech';
 import { Avatar, ConversationMessage } from '@/types/Avatar';
 import { AVATARS } from '@/data/avatars';
-import ElevenLabsService from '@/services/voice/ElevenLabsService';
+import ElevenLabsService, { ElevenLabsVoice } from '@/services/voice/ElevenLabsService';
 import A2EService from '@/services/avatar/A2EService';
 import DeepgramService from '@/services/voice/DeepgramService';
 import TranslationService from '@/services/translation/TranslationService';
@@ -39,6 +39,13 @@ export default function AvatarScreen() {
   // Avatar seçimi
   const [selectedAvatar, setSelectedAvatar] = useState<Avatar>(AVATARS[0]);
   const [menuVisible, setMenuVisible] = useState(false);
+
+  // 🆕 Voice seçimi (ElevenLabs voices)
+  const [selectedVoice, setSelectedVoice] = useState<ElevenLabsVoice>(
+    ElevenLabsService.getVoiceForGender(AVATARS[0].gender)
+  );
+  const [voiceMenuVisible, setVoiceMenuVisible] = useState(false);
+  const [useElevenLabs, setUseElevenLabs] = useState(true); // Toggle between ElevenLabs and A2E
 
   // Dual Text Areas (Turkish ↔ English)
   const [textInput1, setTextInput1] = useState('');
@@ -68,7 +75,18 @@ export default function AvatarScreen() {
     }
     setSelectedAvatar(avatar);
     setCurrentVideoUrl(null);
+    // 🆕 Auto-select voice for avatar gender
+    setSelectedVoice(ElevenLabsService.getVoiceForGender(avatar.gender));
     closeMenu();
+  };
+
+  // 🆕 Voice seçim menüsü
+  const openVoiceMenu = () => setVoiceMenuVisible(true);
+  const closeVoiceMenu = () => setVoiceMenuVisible(false);
+
+  const handleVoiceSelect = (voice: ElevenLabsVoice) => {
+    setSelectedVoice(voice);
+    closeVoiceMenu();
   };
 
   // Translation Handler (Bi-directional)
@@ -117,7 +135,7 @@ export default function AvatarScreen() {
     setTextInput2(temp);
   };
 
-  // 🆕 Speak Handler with fallback (if A2E fails, use device TTS)
+  // 🆕 Speak Handler with ElevenLabs + A2E integration
   const handleSpeak = async (textArea: 1 | 2) => {
     const text = textArea === 1 ? textInput1 : textInput2;
     const lang = textArea === 1 ? lang1 : lang2;
@@ -140,9 +158,35 @@ export default function AvatarScreen() {
 
     try {
       console.log(`🚀 Starting TTS for language: ${lang}`);
+      console.log(`🎤 Using voice: ${selectedVoice.displayName}`);
+      console.log(`🎬 Use ElevenLabs: ${useElevenLabs}`);
 
-      // Try A2E lip-sync video generation with language-specific voice
-      const videoUrl = await A2EService.createLipsync(newMessage.text, selectedAvatar, lang);
+      let videoUrl: string;
+
+      if (useElevenLabs) {
+        // 🆕 ElevenLabs + A2E Pipeline
+        console.log('🎤 Step 1: Generating ElevenLabs TTS audio...');
+
+        // Generate audio with ElevenLabs and upload to temporary storage
+        const audioUrl = await ElevenLabsService.textToSpeech(
+          newMessage.text,
+          selectedVoice.voice_id,
+          true // Upload to storage for A2E
+        );
+
+        console.log('✅ ElevenLabs audio ready:', audioUrl);
+        console.log('🎬 Step 2: Creating A2E lip-sync video...');
+
+        // Create lip-sync video with ElevenLabs audio
+        videoUrl = await A2EService.createLipsyncWithExternalAudio(audioUrl, selectedAvatar);
+
+        console.log('✅ ElevenLabs + A2E lip-sync video ready!');
+      } else {
+        // Use A2E built-in TTS (fallback)
+        console.log('🎬 Using A2E built-in TTS...');
+        videoUrl = await A2EService.createLipsync(newMessage.text, selectedAvatar, lang);
+        console.log('✅ A2E lip-sync video ready!');
+      }
 
       setMessages((prev) =>
         prev.map((msg) =>
@@ -151,9 +195,8 @@ export default function AvatarScreen() {
       );
 
       setCurrentVideoUrl(videoUrl);
-      console.log('✅ Lip-sync video ready!');
     } catch (error) {
-      console.error('❌ A2E Error:', error);
+      console.error('❌ TTS Error:', error);
 
       // Fallback to device TTS (no video, just audio)
       console.log('🔄 Falling back to device TTS...');
@@ -369,12 +412,57 @@ export default function AvatarScreen() {
             </Menu>
           </View>
 
-          {/* Right side - Mode indicator */}
-          <View style={styles.modeIndicator}>
-            <Text variant="labelSmall" style={styles.modeText}>
-              🌐 Translation Mode
-            </Text>
-          </View>
+          {/* Right side - Voice selector */}
+          <Menu
+            visible={voiceMenuVisible}
+            onDismiss={closeVoiceMenu}
+            anchor={
+              <TouchableOpacity
+                onPress={openVoiceMenu}
+                style={styles.voiceBadge}
+              >
+                <Text variant="labelSmall" style={styles.voiceLabel}>
+                  🎤 Voice
+                </Text>
+                <Text variant="labelSmall" style={styles.voiceNameText}>
+                  {selectedVoice.name}
+                </Text>
+                <IconButton icon="chevron-down" size={16} style={styles.voiceDropdownIcon} />
+              </TouchableOpacity>
+            }
+          >
+            <Menu.Item
+              title="🔊 Voice Source"
+              disabled
+              titleStyle={{ fontWeight: 'bold', color: '#6750A4' }}
+            />
+            <Menu.Item
+              onPress={() => setUseElevenLabs(true)}
+              title="✨ ElevenLabs (Native)"
+              leadingIcon={useElevenLabs ? 'check-circle' : 'circle-outline'}
+            />
+            <Menu.Item
+              onPress={() => setUseElevenLabs(false)}
+              title="🤖 A2E (Built-in)"
+              leadingIcon={!useElevenLabs ? 'check-circle' : 'circle-outline'}
+            />
+            <Divider />
+            <Menu.Item
+              title="🎭 ElevenLabs Voices"
+              disabled
+              titleStyle={{ fontWeight: 'bold', color: '#6750A4' }}
+            />
+            {Object.values(ElevenLabsService.VOICES)
+              .filter((voice) => voice.gender === selectedAvatar.gender)
+              .map((voice) => (
+                <Menu.Item
+                  key={voice.voice_id}
+                  onPress={() => handleVoiceSelect(voice)}
+                  title={voice.displayName}
+                  leadingIcon={selectedVoice.voice_id === voice.voice_id ? 'check' : undefined}
+                />
+              ))}
+          </Menu>
         </View>
 
         {/* 🆕 COMPACT Avatar Video Section */}
@@ -705,6 +793,29 @@ const styles = StyleSheet.create({
     color: '#6750A4',
     fontWeight: '600',
     fontSize: 11,
+  },
+  // 🆕 Voice Badge Styles
+  voiceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 2,
+  },
+  voiceLabel: {
+    color: '#2E7D32',
+    fontSize: 10,
+  },
+  voiceNameText: {
+    color: '#1B5E20',
+    fontWeight: '600',
+    fontSize: 11,
+  },
+  voiceDropdownIcon: {
+    margin: 0,
+    padding: 0,
   },
   // 🆕 Compact Video Section
   videoSection: {

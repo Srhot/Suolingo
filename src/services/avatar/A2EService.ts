@@ -26,7 +26,65 @@ class A2EService {
   }
 
   /**
-   * Create lip-sync video from text
+   * 🆕 Create lip-sync video using external audio URL (e.g., from ElevenLabs)
+   * This method allows using high-quality voices from ElevenLabs with A2E avatar lip-sync
+   * @param audioUrl - Public URL of the audio file (must be accessible to A2E)
+   * @param avatar - Avatar to use for lip-sync
+   * @returns Video URL with lip-synced avatar
+   */
+  async createLipsyncWithExternalAudio(audioUrl: string, avatar: Avatar): Promise<string> {
+    try {
+      console.log('🎬 A2E Lip-sync with external audio starting...');
+      console.log('Audio URL:', audioUrl);
+      console.log('Avatar:', avatar.name);
+      console.log('Creator ID:', avatar.a2eCreatorId);
+
+      if (!avatar.a2eCreatorId) {
+        throw new Error('A2E creator ID not found for avatar');
+      }
+
+      // Step 1: Create video generation task with external audio URL
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+
+      console.log('🎬 Creating lip-sync video with external audio...');
+      const response = await axios.post(
+        `${this.baseURL}/api/v1/video/generate`,
+        {
+          title: `Suolingo-ElevenLabs-${timestamp}`,
+          anchor_id: avatar.a2eCreatorId,
+          anchor_type: 1, // 1 = custom avatar
+          audioSrc: audioUrl, // 🆕 ElevenLabs audio URL
+          isSkipRs: true,
+          isAliendPreview: true,
+          resolution: 1080,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      console.log('Video Generate Response:', JSON.stringify(response.data));
+
+      // API returns { code: 0, data: { _id: "..." } }
+      const lipsyncId = response.data?.data?._id || response.data?.data?.id;
+      console.log('✅ Lipsync task created:', lipsyncId);
+
+      // Step 2: Wait for completion
+      const videoUrl = await this.waitForCompletion(lipsyncId);
+
+      console.log('✅ A2E Lip-sync video with ElevenLabs audio ready!');
+      return videoUrl;
+    } catch (error: any) {
+      console.error('❌ A2E External Audio Lipsync Error:', error.response?.data || error.message);
+      throw new Error('Failed to create lip-sync video with external audio');
+    }
+  }
+
+  /**
+   * Create lip-sync video from text (using A2E built-in TTS)
    */
   async createLipsync(text: string, avatar: Avatar, language: 'tr' | 'en' = 'en'): Promise<string> {
     try {
