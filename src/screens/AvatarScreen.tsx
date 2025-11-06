@@ -580,6 +580,47 @@ export default function AvatarScreen() {
             </Menu>
           </View>
 
+          {/* 🆕 CENTER - Mode Selector */}
+          <Menu
+            visible={modeMenuVisible}
+            onDismiss={() => setModeMenuVisible(false)}
+            anchor={
+              <TouchableOpacity
+                onPress={() => setModeMenuVisible(true)}
+                style={styles.modeBadge}
+              >
+                <Text variant="labelSmall" style={styles.modeLabel}>
+                  {learningMode === 'translation' && '📝 Translation'}
+                  {learningMode === 'conversation' && '💬 Conversation'}
+                  {learningMode === 'correction' && '✏️ Correction'}
+                  {learningMode === 'wordofday' && '📚 Word of Day'}
+                </Text>
+                <IconButton icon="chevron-down" size={16} style={styles.modeDropdownIcon} />
+              </TouchableOpacity>
+            }
+          >
+            <Menu.Item
+              onPress={() => { setLearningMode('translation'); setModeMenuVisible(false); }}
+              title="📝 Translation Mode"
+              leadingIcon={learningMode === 'translation' ? 'check' : undefined}
+            />
+            <Menu.Item
+              onPress={() => { setLearningMode('conversation'); setModeMenuVisible(false); }}
+              title="💬 Conversation Mode"
+              leadingIcon={learningMode === 'conversation' ? 'check' : undefined}
+            />
+            <Menu.Item
+              onPress={() => { setLearningMode('correction'); setModeMenuVisible(false); }}
+              title="✏️ Sentence Correction"
+              leadingIcon={learningMode === 'correction' ? 'check' : undefined}
+            />
+            <Menu.Item
+              onPress={() => { setLearningMode('wordofday'); setModeMenuVisible(false); }}
+              title="📚 Word of the Day"
+              leadingIcon={learningMode === 'wordofday' ? 'check' : undefined}
+            />
+          </Menu>
+
           {/* Right side - Voice selector */}
           <Menu
             visible={voiceMenuVisible}
@@ -702,7 +743,7 @@ export default function AvatarScreen() {
           )}
         </View>
 
-        {/* 🆕 IMPROVED DUAL TEXT AREAS */}
+        {/* 🆕 MODE-BASED CONTENT */}
         <KeyboardAvoidingView
           style={styles.flex1}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -714,9 +755,12 @@ export default function AvatarScreen() {
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled={true}
           >
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              🌐 Çift Dil Çeviri Sistemi
-            </Text>
+            {/* MODE 1-3: Translation Mode (Default) */}
+            {learningMode === 'translation' && (
+              <>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  🌐 Çift Dil Çeviri Sistemi
+                </Text>
 
             {/* Text Area 1 */}
             <Card style={styles.textCard} mode="outlined">
@@ -891,9 +935,218 @@ export default function AvatarScreen() {
               </View>
             )}
 
-            <Text variant="bodySmall" style={styles.keyboardHint}>
-              💡 Klavyeyi kapatmak için ekrana dokunun
-            </Text>
+                <Text variant="bodySmall" style={styles.keyboardHint}>
+                  💡 Klavyeyi kapatmak için ekrana dokunun
+                </Text>
+              </>
+            )}
+
+            {/* MODE 4: Conversation Mode */}
+            {learningMode === 'conversation' && (
+              <>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  💬 Conversation Mode
+                </Text>
+
+                {/* Start Conversation Button */}
+                {conversationHistory.length === 0 && (
+                  <Card style={styles.textCard} mode="outlined">
+                    <Card.Content>
+                      <Text variant="bodyMedium" style={{ marginBottom: 12, textAlign: 'center' }}>
+                        Start a natural conversation with the avatar!
+                      </Text>
+                      <Button
+                        mode="contained"
+                        icon="chat"
+                        onPress={handleStartConversation}
+                        disabled={isProcessing}
+                      >
+                        Start Conversation
+                      </Button>
+                    </Card.Content>
+                  </Card>
+                )}
+
+                {/* Conversation History */}
+                {conversationHistory.length > 0 && (
+                  <>
+                    <Card style={styles.textCard} mode="outlined">
+                      <Card.Content>
+                        {conversationHistory.map((msg, index) => (
+                          <View
+                            key={index}
+                            style={[
+                              styles.chatMessage,
+                              msg.role === 'user' ? styles.chatMessageUser : styles.chatMessageTeacher,
+                            ]}
+                          >
+                            <Text variant="labelSmall" style={styles.chatMessageRole}>
+                              {msg.role === 'user' ? 'You' : 'Teacher'}
+                            </Text>
+                            <Text variant="bodyMedium">{msg.content}</Text>
+                          </View>
+                        ))}
+                      </Card.Content>
+                    </Card>
+
+                    {/* Input Area */}
+                    <Card style={styles.textCard} mode="outlined">
+                      <Card.Content>
+                        <TextInput
+                          value={conversationInput}
+                          onChangeText={setConversationInput}
+                          placeholder="Type your response..."
+                          mode="outlined"
+                          multiline
+                          numberOfLines={2}
+                          maxLength={200}
+                          style={styles.textInput}
+                          disabled={isProcessing}
+                        />
+                        <Button
+                          mode="contained"
+                          icon="send"
+                          onPress={handleConversationSend}
+                          disabled={!conversationInput.trim() || isProcessing}
+                          style={{ marginTop: 8 }}
+                        >
+                          Send
+                        </Button>
+                      </Card.Content>
+                    </Card>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* MODE 5: Sentence Correction */}
+            {learningMode === 'correction' && (
+              <>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  ✏️ Sentence Correction
+                </Text>
+
+                <Card style={styles.textCard} mode="outlined">
+                  <Card.Content>
+                    <Text variant="bodyMedium" style={{ marginBottom: 12 }}>
+                      Write a sentence in {lang2 === 'en' ? 'English' : 'Turkish'} and get corrections!
+                    </Text>
+                    <TextInput
+                      value={correctionInput}
+                      onChangeText={setCorrectionInput}
+                      placeholder="Type your sentence here..."
+                      mode="outlined"
+                      multiline
+                      numberOfLines={3}
+                      maxLength={300}
+                      style={styles.textInput}
+                      disabled={isProcessing}
+                    />
+                    <Button
+                      mode="contained"
+                      icon="check-circle"
+                      onPress={handleCorrectSentence}
+                      disabled={!correctionInput.trim() || isProcessing}
+                      style={{ marginTop: 8 }}
+                    >
+                      Check Sentence
+                    </Button>
+                  </Card.Content>
+                </Card>
+
+                {/* Correction Result */}
+                {correctionResult && (
+                  <Card style={styles.textCard} mode="outlined">
+                    <Card.Content>
+                      <Text variant="labelLarge" style={{ marginBottom: 8, color: correctionResult.hasError ? '#D32F2F' : '#388E3C' }}>
+                        {correctionResult.hasError ? '❌ Correction:' : '✅ Perfect!'}
+                      </Text>
+                      {correctionResult.hasError && (
+                        <Text variant="bodyLarge" style={{ marginBottom: 12, fontWeight: 'bold' }}>
+                          {correctionResult.corrected}
+                        </Text>
+                      )}
+                      <Text variant="bodyMedium" style={{ color: '#666' }}>
+                        {correctionResult.explanation}
+                      </Text>
+                    </Card.Content>
+                  </Card>
+                )}
+              </>
+            )}
+
+            {/* MODE 6: Word of the Day */}
+            {learningMode === 'wordofday' && (
+              <>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  📚 Word of the Day
+                </Text>
+
+                {/* Generate Word Button */}
+                {!wordOfTheDay && (
+                  <Card style={styles.textCard} mode="outlined">
+                    <Card.Content>
+                      <Text variant="bodyMedium" style={{ marginBottom: 12, textAlign: 'center' }}>
+                        Get a new vocabulary word to learn today!
+                      </Text>
+                      <Button
+                        mode="contained"
+                        icon="book-open-variant"
+                        onPress={handleGenerateWordOfTheDay}
+                        disabled={isProcessing}
+                      >
+                        Generate Word
+                      </Button>
+                    </Card.Content>
+                  </Card>
+                )}
+
+                {/* Word Card */}
+                {wordOfTheDay && (
+                  <>
+                    <Card style={styles.textCard} mode="outlined">
+                      <Card.Content>
+                        <Text variant="headlineMedium" style={{ marginBottom: 8, fontWeight: 'bold', color: '#6750A4' }}>
+                          {wordOfTheDay.word}
+                        </Text>
+                        <Text variant="bodySmall" style={{ marginBottom: 12, color: '#666' }}>
+                          {wordOfTheDay.translation}
+                        </Text>
+                        <Text variant="bodyMedium" style={{ marginBottom: 16 }}>
+                          {wordOfTheDay.definition}
+                        </Text>
+
+                        <Divider style={{ marginBottom: 12 }} />
+
+                        <Text variant="labelLarge" style={{ marginBottom: 8 }}>
+                          Examples:
+                        </Text>
+                        {wordOfTheDay.examples.map((example, index) => (
+                          <TouchableOpacity
+                            key={index}
+                            onPress={() => handleSpeakExample(example)}
+                            style={styles.exampleItem}
+                          >
+                            <Text variant="bodyMedium">• {example}</Text>
+                            <IconButton icon="volume-high" size={20} />
+                          </TouchableOpacity>
+                        ))}
+
+                        <Button
+                          mode="outlined"
+                          icon="refresh"
+                          onPress={handleGenerateWordOfTheDay}
+                          disabled={isProcessing}
+                          style={{ marginTop: 12 }}
+                        >
+                          Get New Word
+                        </Button>
+                      </Card.Content>
+                    </Card>
+                  </>
+                )}
+              </>
+            )}
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
@@ -1132,5 +1385,54 @@ const styles = StyleSheet.create({
     opacity: 0.5,
     marginTop: 16,
     fontStyle: 'italic',
+  },
+  // 🆕 Mode Badge Styles
+  modeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 2,
+  },
+  modeLabel: {
+    color: '#E65100',
+    fontWeight: '600',
+    fontSize: 10,
+  },
+  modeDropdownIcon: {
+    margin: 0,
+    padding: 0,
+  },
+  // 🆕 Conversation Mode Styles
+  chatMessage: {
+    padding: 12,
+    marginBottom: 8,
+    borderRadius: 12,
+  },
+  chatMessageUser: {
+    backgroundColor: '#E3F2FD',
+    marginLeft: 40,
+  },
+  chatMessageTeacher: {
+    backgroundColor: '#F3E5F5',
+    marginRight: 40,
+  },
+  chatMessageRole: {
+    fontWeight: 'bold',
+    marginBottom: 4,
+    color: '#666',
+  },
+  // 🆕 Word of Day Styles
+  exampleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    marginBottom: 8,
   },
 });
