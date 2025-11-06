@@ -240,25 +240,23 @@ export default function AvatarScreen() {
         console.log('🎤 Starting recording...');
         const { recording: newRecording } = await Audio.Recording.createAsync({
           android: {
-            extension: '.wav',
-            outputFormat: Audio.AndroidOutputFormat.DEFAULT,
-            audioEncoder: Audio.AndroidAudioEncoder.DEFAULT,
+            extension: '.m4a',
+            outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+            audioEncoder: Audio.AndroidAudioEncoder.AAC,
             sampleRate: 16000,
             numberOfChannels: 1,
             bitRate: 128000,
           },
           ios: {
-            extension: '.wav',
+            extension: '.m4a',
+            outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
             audioQuality: Audio.IOSAudioQuality.HIGH,
             sampleRate: 16000,
             numberOfChannels: 1,
             bitRate: 128000,
-            linearPCMBitDepth: 16,
-            linearPCMIsBigEndian: false,
-            linearPCMIsFloat: false,
           },
           web: {
-            mimeType: 'audio/wav',
+            mimeType: 'audio/webm',
             bitsPerSecond: 128000,
           },
         });

@@ -29,10 +29,23 @@ class DeepgramService {
       const audioBlob = await fileResponse.blob();
 
       console.log('Audio blob size:', audioBlob.size);
+      console.log('Audio blob type:', audioBlob.type);
 
       if (audioBlob.size === 0) {
         throw new Error('Audio file is empty');
       }
+
+      // Determine content type based on file extension
+      let contentType = 'audio/m4a';
+      if (audioFileUri.endsWith('.wav')) {
+        contentType = 'audio/wav';
+      } else if (audioFileUri.endsWith('.mp3')) {
+        contentType = 'audio/mp3';
+      } else if (audioFileUri.endsWith('.webm')) {
+        contentType = 'audio/webm';
+      }
+
+      console.log('Using content type:', contentType);
 
       // Use multi-language model (detects Turkish and English automatically)
       const response = await axios.post(
@@ -41,7 +54,7 @@ class DeepgramService {
         {
           headers: {
             'Authorization': `Token ${this.apiKey}`,
-            'Content-Type': 'audio/wav',
+            'Content-Type': contentType,
           },
           timeout: 30000, // 30 second timeout
         }
