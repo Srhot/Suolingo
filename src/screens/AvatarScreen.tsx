@@ -19,6 +19,7 @@ import {
   Menu,
   useTheme,
   Divider,
+  Card,
 } from 'react-native-paper';
 import { Video, ResizeMode, Audio } from 'expo-av';
 import * as Speech from 'expo-speech';
@@ -27,6 +28,8 @@ import { AVATARS } from '@/data/avatars';
 import ElevenLabsService from '@/services/voice/ElevenLabsService';
 import A2EService from '@/services/avatar/A2EService';
 import DeepgramService from '@/services/voice/DeepgramService';
+import TranslationService from '@/services/translation/TranslationService';
+import { LanguageCode } from '@/types/Translation';
 
 export default function AvatarScreen() {
   const theme = useTheme();
@@ -36,8 +39,14 @@ export default function AvatarScreen() {
   const [selectedAvatar, setSelectedAvatar] = useState<Avatar>(AVATARS[0]);
   const [menuVisible, setMenuVisible] = useState(false);
 
+  // 🆕 Dual Text Areas (Turkish ↔ English)
+  const [textInput1, setTextInput1] = useState(''); // First text area
+  const [textInput2, setTextInput2] = useState(''); // Second text area
+  const [lang1, setLang1] = useState<LanguageCode>('tr'); // Language of text area 1
+  const [lang2, setLang2] = useState<LanguageCode>('en'); // Language of text area 2
+  const [isTranslating, setIsTranslating] = useState(false);
+
   // Konuşma
-  const [textInput, setTextInput] = useState('');
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(-1);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -53,70 +62,106 @@ export default function AvatarScreen() {
 
   const handleAvatarSelect = (avatar: Avatar) => {
     if (selectedAvatar.id === avatar.id) {
-      // Same avatar, just close menu
       closeMenu();
       return;
     }
 
     setSelectedAvatar(avatar);
-    setCurrentVideoUrl(null); // Reset video to idle
+    setCurrentVideoUrl(null);
     closeMenu();
   };
 
-  // Konuştur butonu (TTS)
-  const handleSpeak = async () => {
-    if (!textInput.trim()) {
+  // 🆕 Translation Handler (Bi-directional)
+  const handleTranslate = async (fromArea: 1 | 2) => {
+    try {
+      const sourceText = fromArea === 1 ? textInput1 : textInput2;
+
+      if (!sourceText.trim()) {
+        Alert.alert('Uyarı', 'Lütfen çevrilecek metni girin');
+        return;
+      }
+
+      setIsTranslating(true);
+
+      const sourceLang = fromArea === 1 ? lang1 : lang2;
+      const targetLang = fromArea === 1 ? lang2 : lang1;
+
+      console.log(`🌐 Translating from ${sourceLang} to ${targetLang}`);
+
+      const translatedText = await TranslationService.translate(
+        sourceText,
+        sourceLang,
+        targetLang
+      );
+
+      if (fromArea === 1) {
+        setTextInput2(translatedText);
+      } else {
+        setTextInput1(translatedText);
+      }
+
+      console.log('✅ Translation complete');
+
+    } catch (error) {
+      console.error('❌ Translation Error:', error);
+      Alert.alert('Hata', 'Çeviri yapılamadı. İnternet bağlantınızı kontrol edin.');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  // 🆕 Swap Languages (Switch TR ↔ EN)
+  const handleSwapLanguages = () => {
+    setLang1(lang2);
+    setLang2(lang1);
+    const temp = textInput1;
+    setTextInput1(textInput2);
+    setTextInput2(temp);
+  };
+
+  // 🆕 Speak Handler (works for both text areas)
+  const handleSpeak = async (textArea: 1 | 2) => {
+    const text = textArea === 1 ? textInput1 : textInput2;
+    const lang = textArea === 1 ? lang1 : lang2;
+
+    if (!text.trim()) {
       Alert.alert('Uyarı', 'Lütfen bir metin girin');
       return;
     }
 
     const newMessage: ConversationMessage = {
       id: Date.now().toString(),
-      text: textInput.trim(),
+      text: text.trim(),
       timestamp: new Date(),
-      avatarId: selectedAvatar.id, // Save which avatar spoke
+      avatarId: selectedAvatar.id,
     };
 
-    // Mesajı kaydet
     setMessages((prev) => [...prev, newMessage]);
     setCurrentMessageIndex((prev) => prev + 1);
-    setTextInput('');
     setIsProcessing(true);
 
     try {
-      // 🎯 YENİ SİSTEM: ElevenLabs TTS + A2E Lip-Sync
-      console.log('🚀 Starting voice generation...');
+      console.log(`🚀 Starting TTS for language: ${lang}`);
 
-      // Step 1: Get voice for avatar gender
-      const voice = ElevenLabsService.getVoiceForGender(selectedAvatar.gender);
-      console.log('Selected voice:', voice.name);
-
-      // Step 2: Generate natural speech with ElevenLabs (COMMENTED OUT - causes issues)
-      // const audioDataUri = await ElevenLabsService.textToSpeech(newMessage.text, voice.voice_id);
-
-      // Step 3: Create lip-sync video with A2E (using text for now)
+      // Create lip-sync video with A2E (using text)
       const videoUrl = await A2EService.createLipsync(newMessage.text, selectedAvatar);
 
-      // Mesajı video URL'si ile güncelle
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === newMessage.id ? { ...msg, videoUrl } : msg
         )
       );
 
-      // Video URL'sini set et (otomatik oynatılacak)
       setCurrentVideoUrl(videoUrl);
-
       console.log('✅ Lip-sync video ready and playing!');
 
     } catch (error) {
       console.error('❌ Voice/Lip-sync Error:', error);
       Alert.alert('Hata', 'Avatar videosu oluşturulamadı. TTS ile devam ediliyor.');
 
-      // Hata durumunda fallback: Device TTS kullan
       try {
         await Speech.speak(newMessage.text, {
-          language: 'tr-TR',
+          language: lang === 'tr' ? 'tr-TR' : 'en-US',
           pitch: selectedAvatar.gender === 'male' ? 1.0 : 1.2,
           rate: 0.9,
         });
@@ -128,10 +173,9 @@ export default function AvatarScreen() {
     }
   };
 
-  // Mikrofon butonu (STT)
+  // Mikrofon butonu (STT) - will be enhanced in Step 2
   const handleMicrophone = async () => {
     if (isRecording) {
-      // Stop recording
       try {
         console.log('🛑 Stopping recording...');
         await recording?.stopAndUnloadAsync();
@@ -145,14 +189,12 @@ export default function AvatarScreen() {
         }
 
         console.log('📁 Recording URI:', uri);
-
         setIsRecording(false);
         setRecording(null);
 
         try {
-          // Transcribe with Deepgram (pass file URI directly)
           const transcript = await DeepgramService.transcribeAudio(uri);
-          setTextInput(transcript);
+          setTextInput1(transcript); // Default to first text area for now
           console.log('✅ Transcription:', transcript);
         } catch (error) {
           console.error('❌ Transcription error:', error);
@@ -165,7 +207,6 @@ export default function AvatarScreen() {
         setRecording(null);
       }
     } else {
-      // Start recording
       try {
         console.log('🎤 Requesting permissions...');
         const permission = await Audio.requestPermissionsAsync();
@@ -216,14 +257,11 @@ export default function AvatarScreen() {
     }
   };
 
-  // İleri butonu
+  // İleri/Geri Navigation
   const handleNext = () => {
     if (currentMessageIndex < messages.length - 1) {
       const nextIndex = currentMessageIndex + 1;
       setCurrentMessageIndex(nextIndex);
-      setTextInput(messages[nextIndex].text);
-
-      // Eğer video URL'si varsa videoyu çal, yoksa TTS kullan
       const message = messages[nextIndex];
       if (message.videoUrl) {
         setCurrentVideoUrl(message.videoUrl);
@@ -237,14 +275,10 @@ export default function AvatarScreen() {
     }
   };
 
-  // Geri butonu
   const handlePrevious = () => {
     if (currentMessageIndex > 0) {
       const prevIndex = currentMessageIndex - 1;
       setCurrentMessageIndex(prevIndex);
-      setTextInput(messages[prevIndex].text);
-
-      // Eğer video URL'si varsa videoyu çal, yoksa TTS kullan
       const message = messages[prevIndex];
       if (message.videoUrl) {
         setCurrentVideoUrl(message.videoUrl);
@@ -288,7 +322,6 @@ export default function AvatarScreen() {
         {/* Avatar Video/Image Section */}
         <View style={styles.videoSection}>
           {currentVideoUrl ? (
-            // D-ID lip-sync video (konuşma sırasında)
             <Video
               ref={videoRef}
               source={{ uri: currentVideoUrl }}
@@ -298,21 +331,18 @@ export default function AvatarScreen() {
               isLooping={false}
               useNativeControls={false}
               onPlaybackStatusUpdate={(status) => {
-                // Video bitince idle loop'a dön
                 if (status.isLoaded && status.didJustFinish) {
                   setCurrentVideoUrl(null);
                 }
               }}
             />
           ) : selectedAvatar.isStaticImage ? (
-            // Static görsel (PNG/JPG - eski, kullanılmıyor)
             <Image
               source={selectedAvatar.idleVideoUrl}
               style={styles.staticImage}
               resizeMode="contain"
             />
           ) : (
-            // Idle loop video (normal durumda sürekli döner)
             <Video
               source={
                 typeof selectedAvatar.idleVideoUrl === 'string'
@@ -339,7 +369,7 @@ export default function AvatarScreen() {
 
         <Divider />
 
-        {/* Text Input Section - ScrollView ile */}
+        {/* 🆕 DUAL TEXT AREAS + TRANSLATION */}
         <KeyboardAvoidingView
           style={styles.flex1}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -351,45 +381,125 @@ export default function AvatarScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <Text variant="titleMedium" style={styles.sectionTitle}>
-              Metni Girin
+              🌐 Çift Dil Çeviri Sistemi
             </Text>
 
-            <TextInput
-              value={textInput}
-              onChangeText={setTextInput}
-              placeholder="Avatar'ın söylemesini istediğiniz metni yazın..."
-              mode="outlined"
-              multiline
-              numberOfLines={2}
-              maxLength={300}
-              style={styles.textInput}
-              disabled={isProcessing}
-              returnKeyType="done"
-              blurOnSubmit={true}
-            />
+            {/* Text Area 1 */}
+            <Card style={styles.textCard} mode="outlined">
+              <Card.Content>
+                <View style={styles.cardHeader}>
+                  <Text variant="labelLarge" style={styles.langLabel}>
+                    {lang1 === 'tr' ? '🇹🇷 Türkçe' : '🇬🇧 English'}
+                  </Text>
+                  <IconButton
+                    icon="swap-horizontal"
+                    size={20}
+                    onPress={handleSwapLanguages}
+                    disabled={isTranslating || isProcessing}
+                  />
+                </View>
 
-            {/* Konuştur + Mikrofon Butonları */}
-            <View style={styles.actionRow}>
+                <TextInput
+                  value={textInput1}
+                  onChangeText={setTextInput1}
+                  placeholder={lang1 === 'tr' ? 'Türkçe metin girin...' : 'Enter English text...'}
+                  mode="outlined"
+                  multiline
+                  numberOfLines={3}
+                  maxLength={500}
+                  style={styles.textInput}
+                  disabled={isProcessing || isTranslating}
+                />
+
+                <View style={styles.cardActions}>
+                  <Button
+                    mode="contained"
+                    icon="volume-high"
+                    onPress={() => handleSpeak(1)}
+                    disabled={!textInput1.trim() || isProcessing}
+                    style={styles.actionButton}
+                  >
+                    Konuştur
+                  </Button>
+                  <IconButton
+                    icon={isRecording ? 'stop' : 'microphone'}
+                    mode="contained-tonal"
+                    size={24}
+                    onPress={handleMicrophone}
+                    disabled={isProcessing}
+                    containerColor={isRecording ? '#FF0000' : theme.colors.secondaryContainer}
+                  />
+                </View>
+              </Card.Content>
+            </Card>
+
+            {/* Translation Button */}
+            <View style={styles.translationButtonContainer}>
               <Button
-                mode="contained"
-                onPress={handleSpeak}
-                disabled={!textInput.trim() || isProcessing}
-                style={styles.speakButton}
-                icon="volume-high"
+                mode="elevated"
+                icon="translate"
+                onPress={() => handleTranslate(1)}
+                loading={isTranslating}
+                disabled={!textInput1.trim() || isTranslating || isProcessing}
+                style={styles.translateButton}
+                contentStyle={styles.translateButtonContent}
               >
-                Konuştur
+                {isTranslating ? 'Çevriliyor...' : 'Çevir ⬇️'}
               </Button>
 
-              <IconButton
-                icon={isRecording ? "stop" : "microphone"}
-                mode="contained"
-                size={28}
-                onPress={handleMicrophone}
-                disabled={isProcessing}
-                containerColor={isRecording ? '#FF0000' : theme.colors.secondary}
-                iconColor="#fff"
-              />
+              <Text variant="bodySmall" style={styles.translationHint}>
+                veya
+              </Text>
+
+              <Button
+                mode="elevated"
+                icon="translate"
+                onPress={() => handleTranslate(2)}
+                loading={isTranslating}
+                disabled={!textInput2.trim() || isTranslating || isProcessing}
+                style={styles.translateButton}
+                contentStyle={styles.translateButtonContent}
+              >
+                {isTranslating ? 'Çevriliyor...' : 'Çevir ⬆️'}
+              </Button>
             </View>
+
+            {/* Text Area 2 */}
+            <Card style={styles.textCard} mode="outlined">
+              <Card.Content>
+                <View style={styles.cardHeader}>
+                  <Text variant="labelLarge" style={styles.langLabel}>
+                    {lang2 === 'tr' ? '🇹🇷 Türkçe' : '🇬🇧 English'}
+                  </Text>
+                </View>
+
+                <TextInput
+                  value={textInput2}
+                  onChangeText={setTextInput2}
+                  placeholder={lang2 === 'tr' ? 'Türkçe metin girin...' : 'Enter English text...'}
+                  mode="outlined"
+                  multiline
+                  numberOfLines={3}
+                  maxLength={500}
+                  style={styles.textInput}
+                  disabled={isProcessing || isTranslating}
+                />
+
+                <View style={styles.cardActions}>
+                  <Button
+                    mode="contained"
+                    icon="volume-high"
+                    onPress={() => handleSpeak(2)}
+                    disabled={!textInput2.trim() || isProcessing}
+                    style={styles.actionButton}
+                  >
+                    Konuştur
+                  </Button>
+                </View>
+              </Card.Content>
+            </Card>
+
+            <Divider style={styles.divider} />
 
             {/* İleri/Geri Butonları */}
             <View style={styles.navigationRow}>
@@ -419,16 +529,16 @@ export default function AvatarScreen() {
               </Button>
             </View>
 
-            {/* Mesaj Geçmişi Bilgisi */}
+            {/* Mesaj Geçmişi */}
             {messages.length > 0 && (
               <View style={styles.historyInfo}>
                 <Text variant="bodySmall" style={styles.historyText}>
-                  Toplam {messages.length} konuşma kaydedildi
+                  📝 Toplam {messages.length} konuşma kaydedildi
                 </Text>
               </View>
             )}
 
-            {/* Klavye Kapatma İpucu */}
+            {/* Klavye İpucu */}
             <Text variant="bodySmall" style={styles.keyboardHint}>
               💡 Klavyeyi kapatmak için ekrana dokunun
             </Text>
@@ -452,7 +562,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   videoSection: {
-    height: 300,
+    height: 280,
     backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
@@ -488,19 +598,50 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   sectionTitle: {
+    marginBottom: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  textCard: {
     marginBottom: 12,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  langLabel: {
     fontWeight: '600',
   },
   textInput: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  actionRow: {
+  cardActions: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
+    gap: 8,
+    alignItems: 'center',
   },
-  speakButton: {
+  actionButton: {
     flex: 1,
+  },
+  translationButtonContainer: {
+    alignItems: 'center',
+    marginVertical: 12,
+  },
+  translateButton: {
+    marginVertical: 4,
+    minWidth: 200,
+  },
+  translateButtonContent: {
+    paddingVertical: 4,
+  },
+  translationHint: {
+    opacity: 0.6,
+    marginVertical: 4,
+  },
+  divider: {
+    marginVertical: 16,
   },
   navigationRow: {
     flexDirection: 'row',
