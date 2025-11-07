@@ -118,6 +118,7 @@ class A2EService {
           msg: text,
           tts_id: voiceId, // Multilingual voice - auto-detects language
           speech_rate: 1,
+          language: language, // 🔧 FIX: Add explicit language parameter
         },
         {
           headers: {
