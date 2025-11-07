@@ -882,18 +882,21 @@ export default function AvatarScreen() {
         });
 
         console.log('🎤 Starting recording...');
+        // Use LINEAR16 PCM WAV - Deepgram's preferred format
+        // This is the same format used in Translation mode
         const { recording: newRecording } = await Audio.Recording.createAsync({
           isMeteringEnabled: true,
           android: {
-            extension: '.m4a',
-            outputFormat: Audio.AndroidOutputFormat.MPEG_4,
-            audioEncoder: Audio.AndroidAudioEncoder.AAC,
+            extension: '.wav',
+            outputFormat: Audio.AndroidOutputFormat.DEFAULT,
+            audioEncoder: Audio.AndroidAudioEncoder.DEFAULT,
             sampleRate: 16000,
             numberOfChannels: 1,
             bitRate: 128000,
           },
           ios: {
-            extension: '.m4a',
+            extension: '.wav',
+            outputFormat: Audio.IOSOutputFormat.LINEARPCM,
             audioQuality: Audio.IOSAudioQuality.HIGH,
             sampleRate: 16000,
             numberOfChannels: 1,
