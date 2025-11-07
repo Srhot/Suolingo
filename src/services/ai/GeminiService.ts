@@ -68,7 +68,8 @@ Your greeting:`;
   async generateConversationResponse(
     userMessage: string,
     conversationHistory: Array<{ role: string; content: string }>,
-    language: 'tr' | 'en' = 'en'
+    language: 'tr' | 'en' = 'en',
+    level: 'beginner' | 'intermediate' | 'advanced' = 'intermediate'
   ): Promise<string> {
     try {
       const historyText = conversationHistory
@@ -76,8 +77,15 @@ Your greeting:`;
         .join('\n');
 
       const languageName = language === 'tr' ? 'Turkish' : 'English';
+      const levelGuide = level === 'beginner'
+        ? 'Use very simple vocabulary (A1-A2 level). Short sentences. Easy grammar.'
+        : level === 'intermediate'
+        ? 'Use standard vocabulary (B1-B2 level). Natural conversation.'
+        : 'Use advanced vocabulary (C1-C2 level). Complex ideas welcome.';
 
-      const prompt = `You are a friendly ${languageName} language teacher having a natural conversation with a student.
+      const prompt = `You are a friendly ${languageName} language teacher having a natural conversation with a ${level} student.
+
+${levelGuide}
 
 Conversation history:
 ${historyText}
@@ -88,7 +96,7 @@ Respond naturally in ${languageName}:
 - Ask follow-up questions to keep conversation flowing
 - Show genuine interest in student's answers
 - Keep responses conversational and friendly
-- Use simple vocabulary appropriate for language learners
+- Adjust vocabulary complexity for ${level} level
 - Maximum 40 words
 
 Your response:`;
@@ -223,11 +231,21 @@ Your word of the day:`;
   }
 
   // 🆕 Conversation Starter - Generate opening question for conversation mode
-  async generateConversationStarter(language: 'tr' | 'en' = 'en'): Promise<string> {
+  async generateConversationStarter(
+    language: 'tr' | 'en' = 'en',
+    level: 'beginner' | 'intermediate' | 'advanced' = 'intermediate'
+  ): Promise<string> {
     try {
       const languageName = language === 'tr' ? 'Turkish' : 'English';
+      const levelGuide = level === 'beginner'
+        ? 'Use very simple vocabulary (A1-A2 level). Short, easy questions.'
+        : level === 'intermediate'
+        ? 'Use standard vocabulary (B1-B2 level). Natural conversation style.'
+        : 'Use advanced vocabulary (C1-C2 level). Complex topics welcome.';
 
-      const prompt = `You are a friendly ${languageName} language teacher starting a casual conversation with a student.
+      const prompt = `You are a friendly ${languageName} language teacher starting a casual conversation with a ${level} student.
+
+${levelGuide}
 
 Ask an interesting, open-ended question to start the conversation. Topics can include:
 - Hobbies, interests, daily activities

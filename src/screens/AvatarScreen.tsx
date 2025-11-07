@@ -36,10 +36,20 @@ import { LanguageCode } from '@/types/Translation';
 // 🆕 Learning Modes
 type LearningMode = 'translation' | 'conversation' | 'correction' | 'wordofday' | 'flashcard' | 'quiz';
 
+// 🆕 CEFR Language Proficiency Levels
+type CEFRLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+
 export default function AvatarScreen() {
   const theme = useTheme();
   const videoRef = useRef<Video>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // 🆕 Helper: Convert CEFR level to difficulty
+  const cefrToDifficulty = (level: CEFRLevel): 'beginner' | 'intermediate' | 'advanced' => {
+    if (level === 'A1' || level === 'A2') return 'beginner';
+    if (level === 'B1' || level === 'B2') return 'intermediate';
+    return 'advanced'; // C1, C2
+  };
 
   // Avatar seçimi
   const [selectedAvatar, setSelectedAvatar] = useState<Avatar>(AVATARS[0]);
@@ -55,6 +65,10 @@ export default function AvatarScreen() {
   // 🆕 Learning Mode Selection
   const [learningMode, setLearningMode] = useState<LearningMode>('translation');
   const [modeMenuVisible, setModeMenuVisible] = useState(false);
+
+  // 🆕 CEFR Level Selection
+  const [cefrLevel, setCefrLevel] = useState<CEFRLevel>('B1'); // Default: Intermediate
+  const [cefrMenuVisible, setCefrMenuVisible] = useState(false);
 
   // 🆕 Conversation Mode State
   const [conversationHistory, setConversationHistory] = useState<Array<{ role: string; content: string }>>([]);
@@ -383,9 +397,10 @@ export default function AvatarScreen() {
     try {
       setIsProcessing(true);
       const lang = lang2; // Conversation in target language (English default)
+      const difficulty = cefrToDifficulty(cefrLevel);
 
-      console.log('🗣️ Starting conversation...');
-      const starter = await GeminiService.generateConversationStarter(lang);
+      console.log(`🗣️ Starting conversation (${cefrLevel} - ${difficulty})...`);
+      const starter = await GeminiService.generateConversationStarter(lang, difficulty);
 
       setConversationHistory([{ role: 'teacher', content: starter }]);
 
@@ -418,11 +433,13 @@ export default function AvatarScreen() {
       setConversationHistory(newHistory);
       setConversationInput('');
 
-      console.log('💬 Generating AI response...');
+      const difficulty = cefrToDifficulty(cefrLevel);
+      console.log(`💬 Generating AI response (${cefrLevel} - ${difficulty})...`);
       const aiResponse = await GeminiService.generateConversationResponse(
         userMessage,
         newHistory,
-        lang
+        lang,
+        difficulty
       );
 
       // Add AI response to history
@@ -484,9 +501,10 @@ export default function AvatarScreen() {
     try {
       setIsProcessing(true);
       const lang = lang2; // Target language
+      const difficulty = cefrToDifficulty(cefrLevel);
 
-      console.log('📚 Generating word of the day...');
-      const word = await GeminiService.generateWordOfTheDay(lang, 'intermediate');
+      console.log(`📚 Generating word of the day (${cefrLevel} - ${difficulty})...`);
+      const word = await GeminiService.generateWordOfTheDay(lang, difficulty);
 
       setWordOfTheDay(word);
 
@@ -523,9 +541,10 @@ export default function AvatarScreen() {
     try {
       setIsProcessing(true);
       const direction = lang2 === 'en' ? 'en-to-tr' : 'tr-to-en'; // Learn target language
+      const difficulty = cefrToDifficulty(cefrLevel);
 
-      console.log('🃏 Generating flashcard set...');
-      const flashcards = await GeminiService.generateFlashcardSet(direction, 'intermediate', 5);
+      console.log(`🃏 Generating flashcard set (${cefrLevel} - ${difficulty})...`);
+      const flashcards = await GeminiService.generateFlashcardSet(direction, difficulty, 5);
 
       setFlashcardSet(flashcards);
       setCurrentFlashcardIndex(0);
@@ -629,8 +648,9 @@ export default function AvatarScreen() {
     try {
       setIsProcessing(true);
 
-      console.log('📝 Generating grammar quiz...');
-      const questions = await GeminiService.generateGrammarQuiz(topic, 'intermediate', 5);
+      const difficulty = cefrToDifficulty(cefrLevel);
+      console.log(`📝 Generating grammar quiz (${cefrLevel} - ${difficulty})...`);
+      const questions = await GeminiService.generateGrammarQuiz(topic, difficulty, 5);
 
       setQuizQuestions(questions);
       setCurrentQuestionIndex(0);
@@ -799,8 +819,57 @@ export default function AvatarScreen() {
             </Menu>
           </View>
 
-          {/* 🆕 CENTER - Mode Selector */}
+          {/* 🆕 CENTER - CEFR Level + Mode Selector */}
           <View style={styles.centerBadge}>
+            {/* CEFR Level Selector */}
+            <Menu
+              visible={cefrMenuVisible}
+              onDismiss={() => setCefrMenuVisible(false)}
+              anchor={
+                <TouchableOpacity
+                  onPress={() => setCefrMenuVisible(true)}
+                  style={styles.cefrBadge}
+                >
+                  <Text variant="labelSmall" style={styles.cefrLabel}>
+                    🎚️ {cefrLevel}
+                  </Text>
+                  <IconButton icon="chevron-down" size={14} style={styles.cefrDropdownIcon} />
+                </TouchableOpacity>
+              }
+            >
+              <Menu.Item
+                onPress={() => { setCefrLevel('A1'); setCefrMenuVisible(false); }}
+                title="A1 - Beginner"
+                leadingIcon={cefrLevel === 'A1' ? 'check' : undefined}
+              />
+              <Menu.Item
+                onPress={() => { setCefrLevel('A2'); setCefrMenuVisible(false); }}
+                title="A2 - Elementary"
+                leadingIcon={cefrLevel === 'A2' ? 'check' : undefined}
+              />
+              <Menu.Item
+                onPress={() => { setCefrLevel('B1'); setCefrMenuVisible(false); }}
+                title="B1 - Intermediate"
+                leadingIcon={cefrLevel === 'B1' ? 'check' : undefined}
+              />
+              <Menu.Item
+                onPress={() => { setCefrLevel('B2'); setCefrMenuVisible(false); }}
+                title="B2 - Upper Intermediate"
+                leadingIcon={cefrLevel === 'B2' ? 'check' : undefined}
+              />
+              <Menu.Item
+                onPress={() => { setCefrLevel('C1'); setCefrMenuVisible(false); }}
+                title="C1 - Advanced"
+                leadingIcon={cefrLevel === 'C1' ? 'check' : undefined}
+              />
+              <Menu.Item
+                onPress={() => { setCefrLevel('C2'); setCefrMenuVisible(false); }}
+                title="C2 - Proficient"
+                leadingIcon={cefrLevel === 'C2' ? 'check' : undefined}
+              />
+            </Menu>
+
+            {/* Mode Selector */}
             <Menu
               visible={modeMenuVisible}
               onDismiss={() => setModeMenuVisible(false)}
@@ -1664,6 +1733,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 0,
+    gap: 4, // Space between CEFR and Mode badges
   },
   rightBadge: {
     flexDirection: 'row',
@@ -1878,6 +1948,25 @@ const styles = StyleSheet.create({
     opacity: 0.5,
     marginTop: 16,
     fontStyle: 'italic',
+  },
+  // 🆕 CEFR Level Badge Styles
+  cefrBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 2,
+  },
+  cefrLabel: {
+    color: '#2E7D32',
+    fontWeight: '600',
+    fontSize: 11,
+  },
+  cefrDropdownIcon: {
+    margin: 0,
+    padding: 0,
   },
   // 🆕 Mode Badge Styles
   modeBadge: {
