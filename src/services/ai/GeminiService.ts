@@ -491,6 +491,167 @@ Your quiz:`;
       ];
     }
   }
+
+  // 🆕 MODE 7: Role-Play - Generate scenario starter
+  async generateRolePlayStarter(
+    scenario: string,
+    language: 'tr' | 'en' = 'en',
+    level: 'beginner' | 'intermediate' | 'advanced' = 'intermediate'
+  ): Promise<string> {
+    try {
+      const languageName = language === 'tr' ? 'Turkish' : 'English';
+      const levelGuide = level === 'beginner'
+        ? 'Use very simple vocabulary (A1-A2 level). Short, clear sentences.'
+        : level === 'intermediate'
+        ? 'Use standard vocabulary (B1-B2 level). Natural conversation.'
+        : 'Use advanced vocabulary (C1-C2 level). Professional language.';
+
+      const scenarioRoles: Record<string, { avatar: string; user: string; context: string }> = {
+        'restaurant': {
+          avatar: 'waiter',
+          user: 'customer',
+          context: 'You are a friendly waiter at a restaurant taking the customer\'s order.'
+        },
+        'job-interview': {
+          avatar: 'interviewer',
+          user: 'candidate',
+          context: 'You are a professional interviewer conducting a job interview.'
+        },
+        'shopping': {
+          avatar: 'salesperson',
+          user: 'customer',
+          context: 'You are a helpful salesperson assisting a customer in a store.'
+        },
+        'doctor': {
+          avatar: 'doctor',
+          user: 'patient',
+          context: 'You are a caring doctor talking to a patient about their health.'
+        },
+        'hotel': {
+          avatar: 'receptionist',
+          user: 'guest',
+          context: 'You are a hotel receptionist helping a guest with check-in.'
+        },
+        'airport': {
+          avatar: 'staff',
+          user: 'traveler',
+          context: 'You are an airport staff member helping a traveler with information.'
+        },
+      };
+
+      const roleInfo = scenarioRoles[scenario] || scenarioRoles['restaurant'];
+
+      const prompt = `You are a ${languageName} teacher creating a role-play scenario for a ${level} student.
+
+${roleInfo.context}
+
+${levelGuide}
+
+Start the conversation naturally as the ${roleInfo.avatar}. Greet the ${roleInfo.user} and begin the interaction.
+
+Keep it brief and natural (maximum 25 words). Speak in ${languageName}.
+
+Your opening line:`;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      return text.trim();
+    } catch (error) {
+      console.error('Gemini Role-Play Starter Error:', error);
+      const fallback = language === 'en'
+        ? 'Hello! Welcome. How can I help you today?'
+        : 'Merhaba! Hoş geldiniz. Size nasıl yardımcı olabilirim?';
+      return fallback;
+    }
+  }
+
+  // 🆕 MODE 7: Role-Play - Generate avatar response in role
+  async generateRolePlayResponse(
+    userMessage: string,
+    scenario: string,
+    conversationHistory: Array<{ role: string; content: string }>,
+    language: 'tr' | 'en' = 'en',
+    level: 'beginner' | 'intermediate' | 'advanced' = 'intermediate'
+  ): Promise<string> {
+    try {
+      const historyText = conversationHistory
+        .map((msg) => `${msg.role}: ${msg.content}`)
+        .join('\n');
+
+      const languageName = language === 'tr' ? 'Turkish' : 'English';
+      const levelGuide = level === 'beginner'
+        ? 'Use very simple vocabulary (A1-A2 level). Short sentences.'
+        : level === 'intermediate'
+        ? 'Use standard vocabulary (B1-B2 level). Natural conversation.'
+        : 'Use advanced vocabulary (C1-C2 level). Professional language.';
+
+      const scenarioRoles: Record<string, { avatar: string; user: string; context: string }> = {
+        'restaurant': {
+          avatar: 'Waiter',
+          user: 'Customer',
+          context: 'You are a friendly waiter helping the customer with their order. Ask what they want, suggest items, confirm orders.'
+        },
+        'job-interview': {
+          avatar: 'Interviewer',
+          user: 'Candidate',
+          context: 'You are a professional interviewer. Ask about experience, skills, why they want the job, their strengths.'
+        },
+        'shopping': {
+          avatar: 'Salesperson',
+          user: 'Customer',
+          context: 'You are a helpful salesperson. Show products, explain features, suggest alternatives, help with sizing/colors.'
+        },
+        'doctor': {
+          avatar: 'Doctor',
+          user: 'Patient',
+          context: 'You are a caring doctor. Ask about symptoms, when they started, how they feel, give advice.'
+        },
+        'hotel': {
+          avatar: 'Receptionist',
+          user: 'Guest',
+          context: 'You are a hotel receptionist. Help with check-in, room preferences, explain facilities, answer questions.'
+        },
+        'airport': {
+          avatar: 'Airport Staff',
+          user: 'Traveler',
+          context: 'You are airport staff. Help with flight information, directions, baggage, check-in procedures.'
+        },
+      };
+
+      const roleInfo = scenarioRoles[scenario] || scenarioRoles['restaurant'];
+
+      const prompt = `You are a ${languageName} teacher running a role-play scenario for a ${level} student.
+
+${roleInfo.context}
+
+${levelGuide}
+
+Conversation history:
+${historyText}
+
+${roleInfo.user} just said: "${userMessage}"
+
+Respond naturally as the ${roleInfo.avatar} in ${languageName}:
+- Stay in character
+- Keep the scenario moving forward
+- Be helpful and realistic
+- Ask relevant follow-up questions
+- Maximum 40 words
+
+Your response:`;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      return text.trim();
+    } catch (error) {
+      console.error('Gemini Role-Play Response Error:', error);
+      throw new Error('Failed to generate role-play response');
+    }
+  }
 }
 
 export default new GeminiService();

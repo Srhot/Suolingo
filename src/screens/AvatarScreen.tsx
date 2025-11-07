@@ -34,10 +34,13 @@ import GeminiService from '@/services/ai/GeminiService';
 import { LanguageCode } from '@/types/Translation';
 
 // 🆕 Learning Modes
-type LearningMode = 'translation' | 'conversation' | 'correction' | 'wordofday' | 'flashcard' | 'quiz';
+type LearningMode = 'translation' | 'conversation' | 'correction' | 'wordofday' | 'flashcard' | 'quiz' | 'roleplay';
 
 // 🆕 CEFR Language Proficiency Levels
 type CEFRLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+
+// 🆕 Role-Play Scenarios
+type RolePlayScenario = 'restaurant' | 'job-interview' | 'shopping' | 'doctor' | 'hotel' | 'airport';
 
 export default function AvatarScreen() {
   const theme = useTheme();
@@ -108,6 +111,11 @@ export default function AvatarScreen() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showQuizExplanation, setShowQuizExplanation] = useState(false);
   const [quizScore, setQuizScore] = useState({ correct: 0, total: 0 });
+
+  // 🆕 Role-Play Mode State
+  const [rolePlayScenario, setRolePlayScenario] = useState<RolePlayScenario | null>(null);
+  const [rolePlayHistory, setRolePlayHistory] = useState<Array<{ role: string; content: string }>>([]);
+  const [rolePlayInput, setRolePlayInput] = useState('');
 
   // Dual Text Areas (Turkish ↔ English)
   const [textInput1, setTextInput1] = useState('');
@@ -737,6 +745,80 @@ export default function AvatarScreen() {
     }
   };
 
+  // 🆕 MODE 7: Role-Play Mode Handlers
+  const handleStartRolePlay = async (scenario: RolePlayScenario) => {
+    try {
+      setIsProcessing(true);
+      setRolePlayScenario(scenario);
+      const lang = lang2;
+      const difficulty = cefrToDifficulty(cefrLevel);
+
+      console.log(`🎭 Starting role-play: ${scenario} (${cefrLevel} - ${difficulty})...`);
+      const starter = await GeminiService.generateRolePlayStarter(scenario, lang, difficulty);
+
+      setRolePlayHistory([{ role: 'avatar', content: starter }]);
+
+      // Avatar speaks the starter
+      const videoUrl = await A2EService.createLipsync(starter, selectedAvatar, lang);
+      setCurrentVideoUrl(videoUrl);
+
+      console.log('✅ Role-play started');
+    } catch (error) {
+      console.error('❌ Role-Play Start Error:', error);
+      Alert.alert('Hata', 'Role-play başlatılamadı');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRolePlaySend = async () => {
+    if (!rolePlayInput.trim()) {
+      Alert.alert('Uyarı', 'Lütfen bir mesaj yazın');
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      const userMessage = rolePlayInput.trim();
+      const lang = lang2;
+      const difficulty = cefrToDifficulty(cefrLevel);
+
+      // Add user message to history
+      const newHistory = [...rolePlayHistory, { role: 'user', content: userMessage }];
+      setRolePlayHistory(newHistory);
+      setRolePlayInput('');
+
+      console.log(`🎭 Generating avatar response in role...`);
+      const aiResponse = await GeminiService.generateRolePlayResponse(
+        userMessage,
+        rolePlayScenario!,
+        newHistory,
+        lang,
+        difficulty
+      );
+
+      // Add AI response to history
+      setRolePlayHistory([...newHistory, { role: 'avatar', content: aiResponse }]);
+
+      // Avatar speaks the response
+      const videoUrl = await A2EService.createLipsync(aiResponse, selectedAvatar, lang);
+      setCurrentVideoUrl(videoUrl);
+
+      console.log('✅ Avatar responded');
+    } catch (error) {
+      console.error('❌ Role-Play Response Error:', error);
+      Alert.alert('Hata', 'Cevap oluşturulamadı');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleEndRolePlay = () => {
+    setRolePlayScenario(null);
+    setRolePlayHistory([]);
+    setRolePlayInput('');
+  };
+
   // Navigation
   const handleNext = () => {
     if (currentMessageIndex < messages.length - 1) {
@@ -891,6 +973,7 @@ export default function AvatarScreen() {
                       {learningMode === 'wordofday' && '📚 Word'}
                       {learningMode === 'flashcard' && '🃏 Flash'}
                       {learningMode === 'quiz' && '🎯 Quiz'}
+                      {learningMode === 'roleplay' && '🎭 Role-Play'}
                     </Text>
                   </TouchableOpacity>
                 }
@@ -924,6 +1007,11 @@ export default function AvatarScreen() {
                 onPress={() => { setLearningMode('quiz'); setModeMenuVisible(false); }}
                 title="🎯 Grammar Quiz"
                 leadingIcon={learningMode === 'quiz' ? 'check' : undefined}
+              />
+              <Menu.Item
+                onPress={() => { setLearningMode('roleplay'); setModeMenuVisible(false); }}
+                title="🎭 Role-Play Scenarios"
+                leadingIcon={learningMode === 'roleplay' ? 'check' : undefined}
               />
               </Menu>
             </View>
@@ -1696,6 +1784,150 @@ export default function AvatarScreen() {
                             </Button>
                           </View>
                         )}
+                      </Card.Content>
+                    </Card>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* MODE 7: Role-Play Mode */}
+            {learningMode === 'roleplay' && (
+              <>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  🎭 Role-Play Scenarios
+                </Text>
+
+                {/* Scenario Selection */}
+                {!rolePlayScenario && (
+                  <Card style={styles.textCard} mode="outlined">
+                    <Card.Content>
+                      <Text variant="bodyMedium" style={{ marginBottom: 12, textAlign: 'center' }}>
+                        Practice real-world situations! Choose a scenario:
+                      </Text>
+                      <Button
+                        mode="contained"
+                        icon="silverware-fork-knife"
+                        onPress={() => handleStartRolePlay('restaurant')}
+                        disabled={isProcessing}
+                        style={{ marginBottom: 8 }}
+                      >
+                        🍽️ Restaurant (Order Food)
+                      </Button>
+                      <Button
+                        mode="contained"
+                        icon="briefcase"
+                        onPress={() => handleStartRolePlay('job-interview')}
+                        disabled={isProcessing}
+                        style={{ marginBottom: 8 }}
+                      >
+                        💼 Job Interview
+                      </Button>
+                      <Button
+                        mode="contained"
+                        icon="shopping"
+                        onPress={() => handleStartRolePlay('shopping')}
+                        disabled={isProcessing}
+                        style={{ marginBottom: 8 }}
+                      >
+                        🛒 Shopping (Buy Items)
+                      </Button>
+                      <Button
+                        mode="contained"
+                        icon="medical-bag"
+                        onPress={() => handleStartRolePlay('doctor')}
+                        disabled={isProcessing}
+                        style={{ marginBottom: 8 }}
+                      >
+                        🏥 Doctor Visit
+                      </Button>
+                      <Button
+                        mode="contained"
+                        icon="bed"
+                        onPress={() => handleStartRolePlay('hotel')}
+                        disabled={isProcessing}
+                        style={{ marginBottom: 8 }}
+                      >
+                        🏨 Hotel Check-in
+                      </Button>
+                      <Button
+                        mode="contained"
+                        icon="airplane"
+                        onPress={() => handleStartRolePlay('airport')}
+                        disabled={isProcessing}
+                      >
+                        ✈️ Airport (Travel Info)
+                      </Button>
+                    </Card.Content>
+                  </Card>
+                )}
+
+                {/* Active Role-Play */}
+                {rolePlayScenario && (
+                  <>
+                    {/* Scenario Header */}
+                    <Card style={styles.textCard} mode="outlined">
+                      <Card.Content>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text variant="titleSmall" style={{ color: '#6750A4', fontWeight: 'bold' }}>
+                            {rolePlayScenario === 'restaurant' && '🍽️ Restaurant Scenario'}
+                            {rolePlayScenario === 'job-interview' && '💼 Job Interview'}
+                            {rolePlayScenario === 'shopping' && '🛒 Shopping Scenario'}
+                            {rolePlayScenario === 'doctor' && '🏥 Doctor Visit'}
+                            {rolePlayScenario === 'hotel' && '🏨 Hotel Check-in'}
+                            {rolePlayScenario === 'airport' && '✈️ Airport Scenario'}
+                          </Text>
+                          <Button
+                            mode="text"
+                            onPress={handleEndRolePlay}
+                            compact
+                            disabled={isProcessing}
+                          >
+                            End Scenario
+                          </Button>
+                        </View>
+                      </Card.Content>
+                    </Card>
+
+                    {/* Conversation History */}
+                    {rolePlayHistory.map((msg, index) => (
+                      <View
+                        key={index}
+                        style={[
+                          styles.chatMessage,
+                          msg.role === 'user' ? styles.chatMessageUser : styles.chatMessageTeacher
+                        ]}
+                      >
+                        <Text variant="labelSmall" style={{ marginBottom: 4, opacity: 0.7 }}>
+                          {msg.role === 'user' ? 'You' : 'Avatar'}
+                        </Text>
+                        <Text variant="bodyMedium">{msg.content}</Text>
+                      </View>
+                    ))}
+
+                    {/* User Input */}
+                    <Card style={styles.textCard} mode="outlined">
+                      <Card.Content>
+                        <TextInput
+                          value={rolePlayInput}
+                          onChangeText={setRolePlayInput}
+                          placeholder="Type your response..."
+                          mode="outlined"
+                          multiline
+                          numberOfLines={3}
+                          maxLength={500}
+                          style={styles.textInput}
+                          disabled={isProcessing}
+                        />
+                        <Button
+                          mode="contained"
+                          icon="send"
+                          onPress={handleRolePlaySend}
+                          disabled={!rolePlayInput.trim() || isProcessing}
+                          style={{ marginTop: 8 }}
+                        >
+                          Send
+                        </Button>
                       </Card.Content>
                     </Card>
                   </>
