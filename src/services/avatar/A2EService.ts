@@ -26,12 +26,16 @@ class A2EService {
   }
 
   /**
-   * Create lip-sync video from text
+   * 🆕 Create lip-sync video using external audio URL (e.g., from ElevenLabs)
+   * This method allows using high-quality voices from ElevenLabs with A2E avatar lip-sync
+   * @param audioUrl - Public URL of the audio file (must be accessible to A2E)
+   * @param avatar - Avatar to use for lip-sync
+   * @returns Video URL with lip-synced avatar
    */
-  async createLipsync(text: string, avatar: Avatar): Promise<string> {
+  async createLipsyncWithExternalAudio(audioUrl: string, avatar: Avatar): Promise<string> {
     try {
-      console.log('🎬 A2E Lip-sync starting...');
-      console.log('Text:', text.substring(0, 50) + '...');
+      console.log('🎬 A2E Lip-sync with external audio starting...');
+      console.log('Audio URL:', audioUrl);
       console.log('Avatar:', avatar.name);
       console.log('Creator ID:', avatar.a2eCreatorId);
 
@@ -39,14 +43,103 @@ class A2EService {
         throw new Error('A2E creator ID not found for avatar');
       }
 
-      // Step 1: Generate TTS audio using A2E's built-in TTS
-      console.log('📢 Generating TTS audio...');
-      const ttsResponse = await axios.post(
-        `${this.baseURL}/api/v1/video/send_tts`, // Correct endpoint from network analysis
+      // Step 1: Create video generation task with external audio URL
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+
+      console.log('🎬 Creating lip-sync video with external audio...');
+      const response = await axios.post(
+        `${this.baseURL}/api/v1/video/generate`,
         {
-          msg: text,
-          tts_id: avatar.ttsVoiceId || '63a549c1ad2a27fe43d966e1', // Use avatar's voice ID
+          title: `Suolingo-ElevenLabs-${timestamp}`,
+          anchor_id: avatar.a2eCreatorId,
+          anchor_type: 1, // 1 = custom avatar
+          audioSrc: audioUrl, // 🆕 ElevenLabs audio URL
+          isSkipRs: true,
+          isAliendPreview: true,
+          resolution: 1080,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      console.log('Video Generate Response:', JSON.stringify(response.data));
+
+      // API returns { code: 0, data: { _id: "..." } }
+      const lipsyncId = response.data?.data?._id || response.data?.data?.id;
+      console.log('✅ Lipsync task created:', lipsyncId);
+
+      // Step 2: Wait for completion
+      const videoUrl = await this.waitForCompletion(lipsyncId);
+
+      console.log('✅ A2E Lip-sync video with ElevenLabs audio ready!');
+      return videoUrl;
+    } catch (error: any) {
+      console.error('❌ A2E External Audio Lipsync Error:', error.response?.data || error.message);
+      throw new Error('Failed to create lip-sync video with external audio');
+    }
+  }
+
+  /**
+   * Create lip-sync video from text (using A2E built-in TTS)
+   */
+  async createLipsync(text: string, avatar: Avatar, language: 'tr' | 'en' = 'en'): Promise<string> {
+    try {
+      console.log('🎬 A2E Lip-sync starting...');
+      console.log('Text:', text.substring(0, 50) + '...');
+      console.log('Avatar:', avatar.name);
+      console.log('Language:', language);
+      console.log('Creator ID:', avatar.a2eCreatorId);
+
+      if (!avatar.a2eCreatorId) {
+        throw new Error('A2E creator ID not found for avatar');
+      }
+
+      // Use multilingual voice ID (supports all languages automatically)
+      const voiceId = avatar.ttsVoiceId;
+
+      if (!voiceId) {
+        throw new Error('Voice ID not found for avatar');
+      }
+
+      console.log('🗣️ Voice ID:', voiceId);
+      console.log('🌐 Language:', language);
+      console.log('🔍 Language type:', typeof language);
+      console.log('👤 Avatar:', avatar.name);
+
+      // Step 1: Generate TTS audio using A2E's built-in TTS
+      console.log('📢 Generating TTS audio with multilingual voice...');
+
+      // 🔧 CRITICAL FIX: Clean text to avoid JSON encoding issues
+      // Gemini responses may contain quotes, special characters that break A2E API
+      const cleanedText = text
+        .replace(/["]/g, "'")  // Replace double quotes with single quotes
+        .replace(/[""]/g, "'")  // Replace smart quotes with single quotes
+        .replace(/['']/g, "'")  // Replace smart apostrophes with normal apostrophes
+        .trim();
+
+      // 🔧 A2E API requires language parameter even for multilingual voices
+      const languageCode = language; // Use the provided language directly
+
+      console.log('📤 TTS Request:', {
+        msg_length: cleanedText.length,
+        msg_preview: cleanedText.substring(0, 50),
+        msg_original_preview: text.substring(0, 50),
+        tts_id: voiceId,
+        speech_rate: 1,
+        language: languageCode,
+      });
+
+      const ttsResponse = await axios.post(
+        `${this.baseURL}/api/v1/video/send_tts`,
+        {
+          msg: cleanedText,  // ✅ Use cleaned text
+          tts_id: voiceId,
           speech_rate: 1,
+          language: languageCode,
         },
         {
           headers: {
@@ -63,7 +156,7 @@ class A2EService {
       const traceId = ttsResponse.data?.trace_id;
 
       if (!audioUrl || ttsResponse.data?.code !== 0) {
-        throw new Error('Failed to generate TTS audio - no URL returned');
+        throw new Error(`Failed to generate TTS audio - API code: ${ttsResponse.data?.code}, msg: ${ttsResponse.data?.msg}`);
       }
 
       console.log('✅ TTS audio generated:', audioUrl);

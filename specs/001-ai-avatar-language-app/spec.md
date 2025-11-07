@@ -105,7 +105,7 @@ A premium user wants a personalized learning experience by creating a custom ava
 #### Speech and Conversation Engine
 
 - **FR-006**: System MUST convert user speech to text within 2 seconds of speech completion
-- **FR-007**: System MUST support 4 target languages for MVP: Spanish, French, German, and Mandarin Chinese (balanced European and Asian market coverage)
+- **FR-007**: System MUST support 2 target languages for MVP: English (primary focus) and German (secondary), with architecture designed for easy addition of more languages in future phases
 - **FR-008**: System MUST generate contextually appropriate AI responses based on user input and current scenario
 - **FR-009**: System MUST convert AI text responses to natural-sounding speech audio
 - **FR-010**: System MUST generate avatar video with synchronized lip movements and facial expressions matching the speech

@@ -7,7 +7,7 @@ export interface Avatar {
   isStaticImage?: boolean; // Static görsel mi (PNG/JPG) yoksa video mu (MP4)
   thumbnailUrl?: string;
   a2eCreatorId?: string; // A2E AI creator ID (custom avatar için)
-  ttsVoiceId?: string; // A2E TTS voice ID (gender-specific)
+  ttsVoiceId?: string; // A2E TTS voice ID (currently Turkish only)
 }
 
 export interface ConversationMessage {

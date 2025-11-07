@@ -1,4 +1,5 @@
 import axios from 'axios';
+import * as FileSystem from 'expo-file-system';
 import { DEEPGRAM_API_KEY, DEEPGRAM_BASE_URL } from '@env';
 
 class DeepgramService {
@@ -11,43 +12,101 @@ class DeepgramService {
   }
 
   /**
-   * Transcribe audio to text using Deepgram
-   * @param audioUri - Base64 encoded audio data URI (e.g., "data:audio/wav;base64,...")
+   * Transcribe audio to text using Deepgram with multi-language support
+   * @param audioFileUri - File URI of audio (e.g., "file:///...")
    * @returns Transcribed text
    */
   async transcribeAudio(audioFileUri: string): Promise<string> {
     try {
       console.log('🎤 Deepgram STT starting...');
-      console.log('Audio URI:', audioFileUri);
+      console.log('Audio URI:', audioFileUri.substring(0, 50) + '...');
 
-      // Read file as blob
-      const fileResponse = await fetch(audioFileUri);
-      const audioBlob = await fileResponse.blob();
+      if (!this.apiKey) {
+        throw new Error('Deepgram API key not configured');
+      }
 
-      console.log('Audio blob size:', audioBlob.size);
+      // Read file using FileSystem (more reliable than fetch for local files)
+      const fileInfo = await FileSystem.getInfoAsync(audioFileUri);
 
+      if (!fileInfo.exists) {
+        throw new Error('Audio file does not exist');
+      }
+
+      console.log('📁 File size:', fileInfo.size, 'bytes');
+
+      if (fileInfo.size === 0) {
+        throw new Error('Audio file is empty');
+      }
+
+      // Read file as base64 and convert to binary
+      const base64Audio = await FileSystem.readAsStringAsync(audioFileUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      // Convert base64 to binary array (React Native compatible)
+      const binaryString = atob(base64Audio);
+      const binaryArray = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        binaryArray[i] = binaryString.charCodeAt(i);
+      }
+
+      console.log('📦 Binary array size:', binaryArray.length, 'bytes');
+
+      // Determine content type based on file extension
+      let contentType = 'audio/wav'; // Default fallback
+      if (audioFileUri.endsWith('.wav')) {
+        contentType = 'audio/wav';
+      } else if (audioFileUri.endsWith('.mp3')) {
+        contentType = 'audio/mp3';
+      } else if (audioFileUri.endsWith('.m4a')) {
+        contentType = 'audio/m4a';
+      } else if (audioFileUri.endsWith('.caf')) {
+        contentType = 'audio/x-caf'; // iOS Core Audio Format
+      } else if (audioFileUri.endsWith('.webm')) {
+        contentType = 'audio/webm';
+      }
+
+      console.log('🎵 Audio format:', audioFileUri.split('.').pop());
+      console.log('📤 Content-Type:', contentType);
+
+      // Use multi-language model (detects Turkish and English automatically)
       const response = await axios.post(
-        `${this.baseURL}/v1/listen?model=nova-2&language=tr`,
-        audioBlob,
+        `${this.baseURL}/v1/listen?model=nova-2&detect_language=true&punctuate=true`,
+        binaryArray,
         {
           headers: {
             'Authorization': `Token ${this.apiKey}`,
-            'Content-Type': 'audio/wav',
+            'Content-Type': contentType,
           },
+          timeout: 30000, // 30 second timeout
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
         }
       );
 
       const transcript = response.data?.results?.channels?.[0]?.alternatives?.[0]?.transcript;
+      const detectedLanguage = response.data?.results?.channels?.[0]?.detected_language;
 
-      if (!transcript) {
-        throw new Error('No transcription returned');
+      if (!transcript || transcript.trim() === '') {
+        throw new Error('No speech detected in audio');
       }
 
       console.log('✅ Deepgram transcription:', transcript);
+      console.log('🌐 Detected language:', detectedLanguage);
+
       return transcript;
     } catch (error: any) {
       console.error('❌ Deepgram STT Error:', error.response?.data || error.message);
-      throw new Error('Failed to transcribe audio');
+
+      if (error.response?.status === 401) {
+        throw new Error('Deepgram API key is invalid');
+      } else if (error.response?.status === 429) {
+        throw new Error('Deepgram API rate limit exceeded');
+      } else if (error.message?.includes('timeout')) {
+        throw new Error('Transcription timeout - audio too long');
+      }
+
+      throw new Error('Failed to transcribe audio. Please try again.');
     }
   }
 }
