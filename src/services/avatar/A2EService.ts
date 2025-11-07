@@ -113,24 +113,33 @@ class A2EService {
       // Step 1: Generate TTS audio using A2E's built-in TTS
       console.log('📢 Generating TTS audio with multilingual voice...');
 
-      // 🔧 CRITICAL FIX: A2E API requires language parameter even for multilingual voices
+      // 🔧 CRITICAL FIX: Clean text to avoid JSON encoding issues
+      // Gemini responses may contain quotes, special characters that break A2E API
+      const cleanedText = text
+        .replace(/["]/g, "'")  // Replace double quotes with single quotes
+        .replace(/[""]/g, "'")  // Replace smart quotes with single quotes
+        .replace(/['']/g, "'")  // Replace smart apostrophes with normal apostrophes
+        .trim();
+
+      // 🔧 A2E API requires language parameter even for multilingual voices
       const languageCode = language; // Use the provided language directly
 
       console.log('📤 TTS Request:', {
-        msg_length: text.length,
-        msg_preview: text.substring(0, 50),
+        msg_length: cleanedText.length,
+        msg_preview: cleanedText.substring(0, 50),
+        msg_original_preview: text.substring(0, 50),
         tts_id: voiceId,
         speech_rate: 1,
-        language: languageCode, // ✅ Now included
+        language: languageCode,
       });
 
       const ttsResponse = await axios.post(
         `${this.baseURL}/api/v1/video/send_tts`,
         {
-          msg: text,
+          msg: cleanedText,  // ✅ Use cleaned text
           tts_id: voiceId,
           speech_rate: 1,
-          language: languageCode, // ✅ Added back - API requires it
+          language: languageCode,
         },
         {
           headers: {
