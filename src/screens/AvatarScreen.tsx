@@ -822,19 +822,20 @@ export default function AvatarScreen() {
           {/* 🆕 CENTER - CEFR Level + Mode Selector */}
           <View style={styles.centerBadge}>
             {/* CEFR Level Selector */}
-            <View style={styles.cefrBadgeWrapper}>
+            <View style={styles.cefrBadgeWrapper} pointerEvents="box-none">
               <Menu
+                key={`cefr-${cefrLevel}-${cefrMenuVisible}`}
                 visible={cefrMenuVisible}
                 onDismiss={() => setCefrMenuVisible(false)}
                 anchor={
                   <TouchableOpacity
                     onPress={() => setCefrMenuVisible(true)}
                     style={styles.cefrBadge}
+                    activeOpacity={0.7}
                   >
                     <Text variant="labelSmall" style={styles.cefrLabel}>
                       🎚️ {cefrLevel}
                     </Text>
-                    <IconButton icon="chevron-down" size={14} style={styles.cefrDropdownIcon} />
                   </TouchableOpacity>
                 }
               >
@@ -872,14 +873,16 @@ export default function AvatarScreen() {
             </View>
 
             {/* Mode Selector */}
-            <View style={styles.modeBadgeWrapper}>
+            <View style={styles.modeBadgeWrapper} pointerEvents="box-none">
               <Menu
+                key={`mode-${learningMode}-${modeMenuVisible}`}
                 visible={modeMenuVisible}
                 onDismiss={() => setModeMenuVisible(false)}
                 anchor={
                   <TouchableOpacity
                     onPress={() => setModeMenuVisible(true)}
                     style={styles.modeBadge}
+                    activeOpacity={0.7}
                   >
                     <Text variant="labelSmall" style={styles.modeLabel}>
                       {learningMode === 'translation' && '📝 Translation'}
@@ -889,7 +892,6 @@ export default function AvatarScreen() {
                       {learningMode === 'flashcard' && '🃏 Flash'}
                       {learningMode === 'quiz' && '🎯 Quiz'}
                     </Text>
-                    <IconButton icon="chevron-down" size={16} style={styles.modeDropdownIcon} />
                   </TouchableOpacity>
                 }
               >
@@ -928,14 +930,16 @@ export default function AvatarScreen() {
           </View>
 
           {/* Right side - Voice selector */}
-          <View style={styles.rightBadge}>
+          <View style={styles.rightBadge} pointerEvents="box-none">
             <Menu
+            key={`voice-${selectedVoice.voice_id}-${voiceMenuVisible}`}
             visible={voiceMenuVisible}
             onDismiss={closeVoiceMenu}
             anchor={
               <TouchableOpacity
                 onPress={openVoiceMenu}
                 style={styles.voiceBadge}
+                activeOpacity={0.7}
               >
                 <Text variant="labelSmall" style={styles.voiceLabel}>
                   🎤 Voice
@@ -943,7 +947,6 @@ export default function AvatarScreen() {
                 <Text variant="labelSmall" style={styles.voiceNameText}>
                   {selectedVoice.name}
                 </Text>
-                <IconButton icon="chevron-down" size={16} style={styles.voiceDropdownIcon} />
               </TouchableOpacity>
             }
           >
