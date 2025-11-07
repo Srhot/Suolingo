@@ -575,23 +575,33 @@ export default function AvatarScreen() {
       setFlashcardInput('');
       setShowFlashcardAnswer(false);
     } else {
-      // Quiz completed
+      // Flashcard completed
       const percentage = Math.round((flashcardScore.correct / flashcardScore.total) * 100);
+      const score = `${flashcardScore.correct} out of ${flashcardScore.total}`;
+
+      // Short message for A2E (long messages can cause errors)
       const message = percentage >= 80
-        ? `Excellent! You got ${flashcardScore.correct} out of ${flashcardScore.total}!`
-        : `Good try! You got ${flashcardScore.correct} out of ${flashcardScore.total}. Keep practicing!`;
+        ? `Excellent! You got ${score}!`
+        : `Good try! You got ${score}.`;
 
       try {
         setIsProcessing(true);
-        const videoUrl = await A2EService.createLipsync(message, selectedAvatar, lang2);
+        // Use 'en' directly (message is always in English)
+        const videoUrl = await A2EService.createLipsync(message, selectedAvatar, 'en');
         setCurrentVideoUrl(videoUrl);
       } catch (error) {
         console.error('❌ Score speak error:', error);
+        // Continue with Alert even if video fails
       } finally {
         setIsProcessing(false);
       }
 
-      Alert.alert('Flashcard Complete!', message, [
+      // Show detailed message in Alert
+      const detailedMessage = percentage >= 80
+        ? `Excellent! You got ${score}!`
+        : `Good try! You got ${score}. Keep practicing!`;
+
+      Alert.alert('Flashcard Complete!', detailedMessage, [
         { text: 'Try Again', onPress: handleStartFlashcard },
         { text: 'Done', onPress: () => setFlashcardSet([]) }
       ]);
@@ -673,23 +683,35 @@ export default function AvatarScreen() {
     } else {
       // Quiz completed
       const percentage = Math.round((quizScore.correct / quizScore.total) * 100);
+      const score = `${quizScore.correct} out of ${quizScore.total}`;
+
+      // Short message for A2E (long messages can cause errors)
       const message = percentage >= 80
-        ? `Perfect! You got ${quizScore.correct} out of ${quizScore.total} correct!`
+        ? `Perfect! You got ${score}!`
         : percentage >= 60
-        ? `Good job! You got ${quizScore.correct} out of ${quizScore.total}. Keep studying!`
-        : `You got ${quizScore.correct} out of ${quizScore.total}. Review the material and try again!`;
+        ? `Good job! You got ${score}.`
+        : `You got ${score}.`;
 
       try {
         setIsProcessing(true);
-        const videoUrl = await A2EService.createLipsync(message, selectedAvatar, lang2);
+        // Use 'en' directly (message is always in English)
+        const videoUrl = await A2EService.createLipsync(message, selectedAvatar, 'en');
         setCurrentVideoUrl(videoUrl);
       } catch (error) {
         console.error('❌ Score speak error:', error);
+        // Continue with Alert even if video fails
       } finally {
         setIsProcessing(false);
       }
 
-      Alert.alert('Quiz Complete!', message, [
+      // Show detailed message in Alert
+      const detailedMessage = percentage >= 80
+        ? `Perfect! You got ${score} correct!`
+        : percentage >= 60
+        ? `Good job! You got ${score}. Keep studying!`
+        : `You got ${score}. Review the material and try again!`;
+
+      Alert.alert('Quiz Complete!', detailedMessage, [
         { text: 'Done', onPress: () => setQuizQuestions([]) }
       ]);
     }
