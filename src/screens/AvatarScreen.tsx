@@ -597,6 +597,22 @@ export default function AvatarScreen() {
     }
   };
 
+  // 🆕 Speak Flashcard Word (Using device TTS - no token cost)
+  const handleSpeakFlashcardWord = async (word: string) => {
+    try {
+      // Use device TTS for free pronunciation
+      await Speech.speak(word, {
+        language: lang2 === 'en' ? 'en-US' : 'tr-TR',
+        pitch: 1.0,
+        rate: 0.85, // Slightly slower for learning
+      });
+      console.log('🔊 Speaking word:', word);
+    } catch (error) {
+      console.error('❌ TTS Error:', error);
+      Alert.alert('Hata', 'Kelime seslendirilemiyor');
+    }
+  };
+
   // 🆕 MODE 12: Grammar Quiz Mode Handlers
   const handleStartQuiz = async (topic: string) => {
     try {
@@ -1385,9 +1401,18 @@ export default function AvatarScreen() {
                     {/* Current Flashcard */}
                     <Card style={styles.textCard} mode="outlined">
                       <Card.Content>
-                        <Text variant="headlineMedium" style={{ marginBottom: 16, fontWeight: 'bold', color: '#6750A4', textAlign: 'center' }}>
-                          {flashcardSet[currentFlashcardIndex].word}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                          <Text variant="headlineMedium" style={{ fontWeight: 'bold', color: '#6750A4', marginRight: 8 }}>
+                            {flashcardSet[currentFlashcardIndex].word}
+                          </Text>
+                          <IconButton
+                            icon="volume-high"
+                            size={28}
+                            iconColor="#6750A4"
+                            onPress={() => handleSpeakFlashcardWord(flashcardSet[currentFlashcardIndex].word)}
+                            style={{ margin: 0 }}
+                          />
+                        </View>
 
                         <TextInput
                           value={flashcardInput}

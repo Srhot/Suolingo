@@ -403,6 +403,30 @@ Your quiz:`;
             correctAnswer: 1,
             explanation: 'Simple Past tense için "went" kullanılır.',
           },
+          {
+            question: 'She ___ her homework every day.',
+            options: ['do', 'does', 'doing', 'did'],
+            correctAnswer: 1,
+            explanation: 'Üçüncü tekil şahıs (she) için "does" kullanılır.',
+          },
+          {
+            question: 'They ___ to the cinema last week.',
+            options: ['go', 'goes', 'went', 'going'],
+            correctAnswer: 2,
+            explanation: 'Geçmiş zaman için "went" kullanılır.',
+          },
+          {
+            question: 'I ___ studying English now.',
+            options: ['am', 'is', 'are', 'be'],
+            correctAnswer: 0,
+            explanation: 'Present Continuous tense için "I am" kullanılır.',
+          },
+          {
+            question: 'He ___ a teacher.',
+            options: ['am', 'is', 'are', 'be'],
+            correctAnswer: 1,
+            explanation: 'Üçüncü tekil şahıs için "is" kullanılır.',
+          },
         ];
       }
 
@@ -415,6 +439,30 @@ Your quiz:`;
           options: ['go', 'went', 'gone', 'going'],
           correctAnswer: 1,
           explanation: 'Simple Past tense için "went" kullanılır.',
+        },
+        {
+          question: 'She ___ her homework every day.',
+          options: ['do', 'does', 'doing', 'did'],
+          correctAnswer: 1,
+          explanation: 'Üçüncü tekil şahıs (she) için "does" kullanılır.',
+        },
+        {
+          question: 'They ___ to the cinema last week.',
+          options: ['go', 'goes', 'went', 'going'],
+          correctAnswer: 2,
+          explanation: 'Geçmiş zaman için "went" kullanılır.',
+        },
+        {
+          question: 'I ___ studying English now.',
+          options: ['am', 'is', 'are', 'be'],
+          correctAnswer: 0,
+          explanation: 'Present Continuous tense için "I am" kullanılır.',
+        },
+        {
+          question: 'He ___ a teacher.',
+          options: ['am', 'is', 'are', 'be'],
+          correctAnswer: 1,
+          explanation: 'Üçüncü tekil şahıs için "is" kullanılır.',
         },
       ];
     }
