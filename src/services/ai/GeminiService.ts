@@ -359,6 +359,8 @@ Your quiz:`;
       const response = await result.response;
       const text = response.text();
 
+      console.log('🔍 Gemini Quiz Raw Response:', text);
+
       // Parse response
       const questions: Array<{
         question: string;
@@ -368,6 +370,7 @@ Your quiz:`;
       }> = [];
 
       const blocks = text.split(/Q\d+:/).filter((block) => block.trim());
+      console.log('📦 Parsed blocks count:', blocks.length);
 
       for (const block of blocks) {
         const lines = block.split('\n').filter((line) => line.trim());
@@ -394,8 +397,11 @@ Your quiz:`;
         }
       }
 
-      // Fallback if parsing failed
-      if (questions.length === 0) {
+      console.log('✅ Successfully parsed questions:', questions.length);
+
+      // Fallback if parsing failed OR not enough questions
+      if (questions.length < count) {
+        console.log(`⚠️ Not enough questions parsed (${questions.length}/${count}), using fallback`);
         return [
           {
             question: 'I ___ to school yesterday.',
