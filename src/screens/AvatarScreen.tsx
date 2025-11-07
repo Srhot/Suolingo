@@ -819,6 +819,105 @@ export default function AvatarScreen() {
     setRolePlayInput('');
   };
 
+  // 🆕 MODE 7: Role-Play Microphone (STT for role-play input)
+  const handleRolePlayMicrophone = async () => {
+    if (isRecording) {
+      try {
+        console.log('🛑 Stopping recording...');
+        await recording?.stopAndUnloadAsync();
+        const uri = recording?.getURI();
+
+        if (!uri) {
+          Alert.alert('Hata', 'Ses kaydı alınamadı');
+          setIsRecording(false);
+          setRecording(null);
+          return;
+        }
+
+        console.log('📁 Recording URI:', uri);
+        setIsRecording(false);
+        setRecording(null);
+
+        // Reset audio mode
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+        });
+        console.log('✅ Audio mode reset to playback');
+
+        try {
+          // Transcribe audio
+          const transcript = await DeepgramService.transcribeAudio(uri);
+          console.log('✅ Transcription:', transcript);
+
+          // Fill role-play input
+          setRolePlayInput(transcript);
+          Alert.alert('✅ Speech to Text', 'Your speech has been transcribed!');
+        } catch (error) {
+          console.error('❌ Transcription error:', error);
+          Alert.alert('Hata', 'Ses metne çevrilemedi');
+        }
+      } catch (error) {
+        console.error('❌ Stop recording error:', error);
+        Alert.alert('Hata', 'Kayıt durdurulamadı');
+        setIsRecording(false);
+        setRecording(null);
+      }
+    } else {
+      try {
+        console.log('🎤 Requesting permissions...');
+        const permission = await Audio.requestPermissionsAsync();
+
+        if (!permission.granted) {
+          Alert.alert('İzin Gerekli', 'Mikrofon izni verilmedi');
+          return;
+        }
+
+        console.log('✅ Permission granted');
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+        });
+
+        console.log('🎤 Starting recording...');
+        const { recording: newRecording } = await Audio.Recording.createAsync({
+          isMeteringEnabled: true,
+          android: {
+            extension: '.m4a',
+            outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+            audioEncoder: Audio.AndroidAudioEncoder.AAC,
+            sampleRate: 16000,
+            numberOfChannels: 1,
+            bitRate: 128000,
+          },
+          ios: {
+            extension: '.m4a',
+            audioQuality: Audio.IOSAudioQuality.HIGH,
+            sampleRate: 16000,
+            numberOfChannels: 1,
+            bitRate: 128000,
+            linearPCMBitDepth: 16,
+            linearPCMIsBigEndian: false,
+            linearPCMIsFloat: false,
+          },
+          web: {
+            mimeType: 'audio/webm',
+            bitsPerSecond: 128000,
+          },
+        });
+
+        setRecording(newRecording);
+        setIsRecording(true);
+        console.log('✅ Recording started');
+      } catch (error) {
+        console.error('❌ Start recording error:', error);
+        Alert.alert('Hata', 'Kayıt başlatılamadı');
+      }
+    }
+  };
+
   // Navigation
   const handleNext = () => {
     if (currentMessageIndex < messages.length - 1) {
@@ -1911,7 +2010,7 @@ export default function AvatarScreen() {
                         <TextInput
                           value={rolePlayInput}
                           onChangeText={setRolePlayInput}
-                          placeholder="Type your response..."
+                          placeholder="Type your response or tap the microphone..."
                           mode="outlined"
                           multiline
                           numberOfLines={3}
@@ -1919,15 +2018,28 @@ export default function AvatarScreen() {
                           style={styles.textInput}
                           disabled={isProcessing}
                         />
-                        <Button
-                          mode="contained"
-                          icon="send"
-                          onPress={handleRolePlaySend}
-                          disabled={!rolePlayInput.trim() || isProcessing}
-                          style={{ marginTop: 8 }}
-                        >
-                          Send
-                        </Button>
+                        {/* Microphone and Send buttons in a row */}
+                        <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                          <IconButton
+                            icon={isRecording ? 'stop' : 'microphone'}
+                            mode="contained"
+                            size={24}
+                            onPress={handleRolePlayMicrophone}
+                            disabled={isProcessing}
+                            containerColor={isRecording ? '#FF5252' : theme.colors.primaryContainer}
+                            iconColor={isRecording ? '#FFF' : theme.colors.primary}
+                            style={{ flex: 0 }}
+                          />
+                          <Button
+                            mode="contained"
+                            icon="send"
+                            onPress={handleRolePlaySend}
+                            disabled={!rolePlayInput.trim() || isProcessing}
+                            style={{ flex: 1 }}
+                          >
+                            Send
+                          </Button>
+                        </View>
                       </Card.Content>
                     </Card>
                   </>
