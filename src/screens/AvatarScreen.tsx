@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -39,6 +39,7 @@ type LearningMode = 'translation' | 'conversation' | 'correction' | 'wordofday' 
 export default function AvatarScreen() {
   const theme = useTheme();
   const videoRef = useRef<Video>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Avatar seçimi
   const [selectedAvatar, setSelectedAvatar] = useState<Avatar>(AVATARS[0]);
@@ -657,6 +658,11 @@ export default function AvatarScreen() {
     } else {
       setQuizScore(prev => ({ correct: prev.correct, total: prev.total + 1 }));
     }
+
+    // Scroll to bottom to show "Next Question" button
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 300);
   };
 
   const handleNextQuestion = async () => {
@@ -957,6 +963,7 @@ export default function AvatarScreen() {
           keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
         >
           <ScrollView
+            ref={scrollViewRef}
             style={styles.inputSection}
             contentContainerStyle={styles.inputContent}
             keyboardShouldPersistTaps="handled"
@@ -1771,7 +1778,7 @@ const styles = StyleSheet.create({
   },
   inputContent: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 200, // Extra padding for Quiz "Next Question" button visibility
   },
   sectionTitle: {
     marginBottom: 16,
