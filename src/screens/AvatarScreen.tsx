@@ -822,21 +822,22 @@ export default function AvatarScreen() {
           {/* 🆕 CENTER - CEFR Level + Mode Selector */}
           <View style={styles.centerBadge}>
             {/* CEFR Level Selector */}
-            <Menu
-              visible={cefrMenuVisible}
-              onDismiss={() => setCefrMenuVisible(false)}
-              anchor={
-                <TouchableOpacity
-                  onPress={() => setCefrMenuVisible(true)}
-                  style={styles.cefrBadge}
-                >
-                  <Text variant="labelSmall" style={styles.cefrLabel}>
-                    🎚️ {cefrLevel}
-                  </Text>
-                  <IconButton icon="chevron-down" size={14} style={styles.cefrDropdownIcon} />
-                </TouchableOpacity>
-              }
-            >
+            <View style={styles.cefrBadgeWrapper}>
+              <Menu
+                visible={cefrMenuVisible}
+                onDismiss={() => setCefrMenuVisible(false)}
+                anchor={
+                  <TouchableOpacity
+                    onPress={() => setCefrMenuVisible(true)}
+                    style={styles.cefrBadge}
+                  >
+                    <Text variant="labelSmall" style={styles.cefrLabel}>
+                      🎚️ {cefrLevel}
+                    </Text>
+                    <IconButton icon="chevron-down" size={14} style={styles.cefrDropdownIcon} />
+                  </TouchableOpacity>
+                }
+              >
               <Menu.Item
                 onPress={() => { setCefrLevel('A1'); setCefrMenuVisible(false); }}
                 title="A1 - Beginner"
@@ -867,29 +868,31 @@ export default function AvatarScreen() {
                 title="C2 - Proficient"
                 leadingIcon={cefrLevel === 'C2' ? 'check' : undefined}
               />
-            </Menu>
+              </Menu>
+            </View>
 
             {/* Mode Selector */}
-            <Menu
-              visible={modeMenuVisible}
-              onDismiss={() => setModeMenuVisible(false)}
-              anchor={
-                <TouchableOpacity
-                  onPress={() => setModeMenuVisible(true)}
-                  style={styles.modeBadge}
-                >
-                  <Text variant="labelSmall" style={styles.modeLabel}>
-                    {learningMode === 'translation' && '📝 Translation'}
-                    {learningMode === 'conversation' && '💬 Talk'}
-                    {learningMode === 'correction' && '✏️ Check'}
-                    {learningMode === 'wordofday' && '📚 Word'}
-                    {learningMode === 'flashcard' && '🃏 Flash'}
-                    {learningMode === 'quiz' && '🎯 Quiz'}
-                  </Text>
-                  <IconButton icon="chevron-down" size={16} style={styles.modeDropdownIcon} />
-                </TouchableOpacity>
-              }
-            >
+            <View style={styles.modeBadgeWrapper}>
+              <Menu
+                visible={modeMenuVisible}
+                onDismiss={() => setModeMenuVisible(false)}
+                anchor={
+                  <TouchableOpacity
+                    onPress={() => setModeMenuVisible(true)}
+                    style={styles.modeBadge}
+                  >
+                    <Text variant="labelSmall" style={styles.modeLabel}>
+                      {learningMode === 'translation' && '📝 Translation'}
+                      {learningMode === 'conversation' && '💬 Talk'}
+                      {learningMode === 'correction' && '✏️ Check'}
+                      {learningMode === 'wordofday' && '📚 Word'}
+                      {learningMode === 'flashcard' && '🃏 Flash'}
+                      {learningMode === 'quiz' && '🎯 Quiz'}
+                    </Text>
+                    <IconButton icon="chevron-down" size={16} style={styles.modeDropdownIcon} />
+                  </TouchableOpacity>
+                }
+              >
               <Menu.Item
                 onPress={() => { setLearningMode('translation'); setModeMenuVisible(false); }}
                 title="📝 Translation Mode"
@@ -920,7 +923,8 @@ export default function AvatarScreen() {
                 title="🎯 Grammar Quiz"
                 leadingIcon={learningMode === 'quiz' ? 'check' : undefined}
               />
-            </Menu>
+              </Menu>
+            </View>
           </View>
 
           {/* Right side - Voice selector */}
@@ -1950,6 +1954,9 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   // 🆕 CEFR Level Badge Styles
+  cefrBadgeWrapper: {
+    flex: 0,
+  },
   cefrBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1969,6 +1976,9 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   // 🆕 Mode Badge Styles
+  modeBadgeWrapper: {
+    flex: 0,
+  },
   modeBadge: {
     flexDirection: 'row',
     alignItems: 'center',

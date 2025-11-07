@@ -107,18 +107,25 @@ class A2EService {
 
       console.log('🗣️ Voice ID:', voiceId);
       console.log('🌐 Language:', language);
+      console.log('🔍 Language type:', typeof language);
       console.log('👤 Avatar:', avatar.name);
 
       // Step 1: Generate TTS audio using A2E's built-in TTS
-      // Multilingual voices automatically detect language and use native pronunciation
+      // Multilingual voices automatically detect language from text content
       console.log('📢 Generating TTS audio with multilingual voice...');
+      console.log('📤 TTS Request body:', JSON.stringify({
+        msg: text.substring(0, 50),
+        tts_id: voiceId,
+        speech_rate: 1,
+      }));
+
       const ttsResponse = await axios.post(
         `${this.baseURL}/api/v1/video/send_tts`,
         {
           msg: text,
-          tts_id: voiceId, // Multilingual voice - auto-detects language
+          tts_id: voiceId, // Multilingual voice - auto-detects language from text
           speech_rate: 1,
-          language: language, // 🔧 FIX: Add explicit language parameter
+          // NOTE: language parameter removed - API auto-detects from text content
         },
         {
           headers: {
