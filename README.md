@@ -1,8 +1,26 @@
 # 🎓 SUOLINGO - AI Avatar Foreign Language Learning App
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![React Native](https://img.shields.io/badge/React%20Native-0.81.5-blue.svg)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-SDK%2054-000020.svg)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
+
 > **University Assignment**: Comprehensive English learning platform with AI avatars, real-time lip-sync, speech recognition, translation, and interactive learning modes
 
 AI-powered **foreign language learning application** where users practice English through multiple interactive modes with AI avatar teachers. Features dual-language translation (Turkish ↔ English), speech-to-text, text-to-speech, custom avatar upload with voice/face cloning, scenario-based learning, pronunciation coaching, and CEFR proficiency levels (A1-C2).
+
+---
+
+## 📑 Table of Contents
+- [MVP Features](#-mvp-features-for-assignment-submission)
+- [12 Interactive Learning Modes](#-12-interactive-learning-modes)
+- [CEFR Language Levels](#-cefr-language-proficiency-levels)
+- [Installation](#%EF%B8%8F-installation)
+- [Project Structure](#-project-structure)
+- [Assignment Requirements](#-assignment-requirements)
+- [Technologies](#-core-technologies)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
@@ -413,8 +431,8 @@ suolingo/
 
 **Course**: Mobile Application Development
 **Institution**: Sinop University
-**Student**: Serhat Hotamışlıgil
-**Date**: November 2025
+**Student**: Serhat SEZGÜL
+**Date**: December 2025
 
 ---
 
@@ -429,9 +447,29 @@ suolingo/
 
 ---
 
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting a pull request.
+
+**Priority areas for contributions:**
+- New learning modes and scenarios
+- Additional language support
+- UI/UX improvements
+- Bug fixes and performance optimization
+
+---
+
 ## 📝 License
 
-This project is created for educational purposes as part of a university assignment.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+**Educational Purpose**: Created as part of a university assignment at Sinop University.
+
+You are free to:
+- ✅ Use this code for learning
+- ✅ Modify and improve
+- ✅ Contribute to the project
+- ✅ Use in commercial projects (with attribution)
 
 ---
 
