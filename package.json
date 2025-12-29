@@ -12,12 +12,13 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@heygen/streaming-avatar": "^2.1.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^6.5.0",
     "@react-navigation/native": "^6.1.0",
     "@react-navigation/stack": "^6.3.0",
     "@reduxjs/toolkit": "^2.0.0",
-    "@google/generative-ai": "^0.21.0",
     "axios": "^1.7.0",
     "expo": "~54.0.0",
     "expo-av": "~16.0.7",
@@ -25,6 +26,7 @@
     "expo-file-system": "~18.0.6",
     "expo-speech": "~14.0.7",
     "expo-status-bar": "~3.0.8",
+    "expo-web-browser": "~15.0.10",
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-dotenv": "^3.4.11",
@@ -38,17 +40,17 @@
   "devDependencies": {
     "@babel/core": "^7.25.0",
     "@types/react": "~19.1.10",
-    "typescript": "~5.9.2",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "babel-plugin-module-resolver": "^5.0.0",
+    "babel-preset-expo": "~54.0.0",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~10.0.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.0",
     "prettier": "^3.3.0",
-    "babel-preset-expo": "~54.0.0",
-    "babel-plugin-module-resolver": "^5.0.0",
-    "react-native-reanimated": "~4.1.1"
+    "react-native-reanimated": "~4.1.1",
+    "typescript": "~5.9.2"
   },
   "private": true
 }

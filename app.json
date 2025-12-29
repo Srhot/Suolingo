@@ -11,6 +11,9 @@
     },
     "android": {
       "package": "com.suolingo.app"
-    }
+    },
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
 }

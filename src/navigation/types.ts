@@ -11,7 +11,8 @@ export type AuthStackParamList = {
 };
 
 export type MainTabParamList = {
-  Home: undefined;
+  Practice: undefined;
+  Exams: undefined;
   Progress: undefined;
   Profile: undefined;
 };
@@ -25,4 +26,5 @@ export type OnboardingStackParamList = {
 export type HomeStackParamList = {
   ScenarioList: undefined;
   Conversation: { scenarioId: string };
+  ExamMode: undefined;
 };

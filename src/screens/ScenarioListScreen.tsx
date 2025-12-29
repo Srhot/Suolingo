@@ -42,6 +42,10 @@ export default function ScenarioListScreen({ navigation }: Props) {
     navigation.navigate('Conversation', { scenarioId: scenario.id });
   };
 
+  const handleExamModePress = () => {
+    navigation.navigate('ExamMode');
+  };
+
   const renderScenarioCard = (scenario: Scenario) => {
     return (
       <TouchableOpacity
@@ -137,6 +141,49 @@ export default function ScenarioListScreen({ navigation }: Props) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Exam Preparation Card */}
+        <TouchableOpacity onPress={handleExamModePress} style={styles.cardWrapper}>
+          <Card style={[styles.card, styles.examCard]} mode="elevated">
+            <Card.Content>
+              <View style={styles.examCardHeader}>
+                <View style={styles.examIconContainer}>
+                  <Icon source="school" size={32} color="#fff" />
+                </View>
+                <View style={styles.examTextContainer}>
+                  <Text variant="titleLarge" style={styles.examTitle}>
+                    Exam Preparation
+                  </Text>
+                  <Text variant="bodyMedium" style={styles.examSubtitle}>
+                    IELTS & TOEFL Speaking Tests
+                  </Text>
+                </View>
+                <Icon source="chevron-right" size={28} color={theme.colors.primary} />
+              </View>
+              <View style={styles.examFeatures}>
+                <View style={styles.featureItem}>
+                  <Icon source="lightning-bolt" size={16} color="#10b981" />
+                  <Text variant="bodySmall" style={styles.featureText}>
+                    Real-time AI Avatar
+                  </Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <Icon source="clock-fast" size={16} color="#10b981" />
+                  <Text variant="bodySmall" style={styles.featureText}>
+                    500ms Latency
+                  </Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <Icon source="account-voice" size={16} color="#10b981" />
+                  <Text variant="bodySmall" style={styles.featureText}>
+                    Live Conversation
+                  </Text>
+                </View>
+              </View>
+            </Card.Content>
+          </Card>
+        </TouchableOpacity>
+
+        {/* Scenario Cards */}
         {MOCK_SCENARIOS.map(renderScenarioCard)}
       </ScrollView>
     </View>
@@ -226,5 +273,53 @@ const styles = StyleSheet.create({
   objective: {
     opacity: 0.8,
     marginBottom: 2,
+  },
+  examCard: {
+    backgroundColor: '#f0f9ff',
+    borderWidth: 2,
+    borderColor: '#3b82f6',
+    elevation: 4,
+  },
+  examCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  examIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#3b82f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  examTextContainer: {
+    flex: 1,
+  },
+  examTitle: {
+    fontWeight: 'bold',
+    color: '#1e40af',
+  },
+  examSubtitle: {
+    color: '#3b82f6',
+    marginTop: 4,
+  },
+  examFeatures: {
+    flexDirection: 'row',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#bfdbfe',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  featureText: {
+    color: '#059669',
+    fontWeight: '500',
   },
 });
