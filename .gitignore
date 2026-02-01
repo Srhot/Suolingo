@@ -93,3 +93,32 @@ createlipAPIekran.png
 # Windows special files
 nul
 NUL
+
+# Session and temporary files
+.notebooklm-config
+COMPREHENSIVE_SESSION_MEMORY.md
+CURRENT_SESSION_STATUS.md
+SESSION_CONTINUATION_STATUS.md
+
+# Exam materials
+SINAV_SORULARI_*.md
+GOOGLE_A2UI_ANALIZ.md
+
+# AI Studio files
+GOOGLE_AI_STUDIO_*.md
+
+# LinkedIn posts
+LINKEDIN_POST*.md
+
+# APK build notes
+APK_BUILD_NOTES.md
+
+# Test files (Tavus/NavTalk)
+test-*.js
+
+# Images (session related)
+Son Ders.JPG
+*.JPG
+
+# Documentation folder (local only)
+docs/
